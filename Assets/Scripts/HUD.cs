@@ -19,23 +19,18 @@ public class HUD : MonoBehaviour
     [SerializeField]
     GameObject HelpMenuContainer;
 
-    [SerializeField]
-    Toggle KiToggle;   
-    [SerializeField]
-    Toggle HumanToggle;
-    [SerializeField]
-    Slider S_Width;
-    [SerializeField]
-    Slider S_Height;    
-    [SerializeField]
-    Slider S_Difficulty;
-    [SerializeField]
-    Text currentPlayerText;
-    string PreTextPlayerInfo = "Current Player: ";
+    [SerializeField]    Toggle T_KiToggle;   
+    [SerializeField]    Toggle T_HumanToggle;
+    [SerializeField]    Slider S_Width;
+    [SerializeField]    Slider S_Height;    
+    [SerializeField]    Slider S_Difficulty;
 
-    [SerializeField]
-    Text WinText;
+    [SerializeField]    Text currentPlayerText;
+    string PreTextPlayerInfo = "Current Player: ";
+    [SerializeField]    Text WinText;
     string PreTextPlayerWin = "Winner: ";
+    [SerializeField] public Text TimeText;
+    public string PreTextTime = "Remaining Time: ";
 
 
     [SerializeField]
@@ -67,7 +62,15 @@ public class HUD : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (GameManager.currentGamestate == GameStates.InGame)
+        {
+            GamePlayHandler handler = FindObjectOfType<GamePlayHandler>();
+            if (handler != null)
+            {
+                TimeText.text = PreTextTime + Mathf.Round(handler.RemainingTime.RemainTime);
+            }
+        }
+ 
     }
 
     // TODO: Solve it with events!
@@ -87,7 +90,7 @@ public class HUD : MonoBehaviour
     //TODO: Has to Start if the GameScene has loded
     public void StartGame()
     {
-        KiToggle.gameObject.SetActive(false);        
+        T_KiToggle.gameObject.SetActive(false);        
         FindObjectOfType<GamePlayHandler>().StartGame();        
     }
 
@@ -207,23 +210,23 @@ public class HUD : MonoBehaviour
         {
             if (t.name == "KI")
             {
-                KiToggle = t;
-                KiToggle.onValueChanged.AddListener(delegate {KIvsHumanToggle();});
+                T_KiToggle = t;
+                T_KiToggle.onValueChanged.AddListener(delegate {KIvsHumanToggle();});
             }
             if (t.name == "Human")
             {
-                HumanToggle = t;
+                T_HumanToggle = t;
             }
-            if (KiToggle != null && HumanToggle != null)
+            if (T_KiToggle != null && T_HumanToggle != null)
             {
                 break;
             }
         }
-        if (KiToggle == null)
+        if (T_KiToggle == null)
         {
             Debug.LogWarning("KI Toggle could not be allocated");
         }
-        if (HumanToggle == null)
+        if (T_HumanToggle == null)
         {
             Debug.LogWarning("Human Toggle could not be allocated");
         }
@@ -236,22 +239,23 @@ public class HUD : MonoBehaviour
             if (s.name == "Width")
             {
                 S_Width = s;
-                S_Width.value = ConfigurationUtils.Width;
                 S_Width.onValueChanged.AddListener(delegate { changeWidth(S_Width); });
+                S_Width.value = ConfigurationUtils.Width;
+
             }
             if (s.name == "Height")
             {
                 S_Height = s;
+                S_Height.onValueChanged.AddListener(delegate { changeHeight(S_Height); });
                 S_Height.value = ConfigurationUtils.Height;
-                S_Height.onValueChanged.AddListener(delegate { changeHeight(S_Width); });
+
 
             }
             if (s.name == "Difficulty")
             {
-
                 S_Difficulty = s;
+                S_Difficulty.onValueChanged.AddListener(delegate { changeDiff(S_Difficulty); });
                 S_Difficulty.value = 0;
-                S_Difficulty.onValueChanged.AddListener(delegate { changeDiff(S_Width); });
             }
             if (S_Width != null && S_Height != null && S_Difficulty != null)
             {
@@ -271,7 +275,6 @@ public class HUD : MonoBehaviour
             Debug.LogWarning("Difficulty could not be allocated");
         }
     }
-
     void AllocateText()
     {
         Text[] texts = FindObjectsOfType<Text>();
@@ -286,18 +289,25 @@ public class HUD : MonoBehaviour
                 WinText = t;
                 WinText.gameObject.SetActive(false);
             }
+            if (t.name == "TimeInfoText")
+            {
+                TimeText = t;
+                //TimeText.gameObject.SetActive(false);
+            }
+
         }
 
         if (currentPlayerText == null)
             Debug.LogWarning("TextField could not be allocated");
-
         if (WinText == null)
+            Debug.LogWarning("TextField could not be allocated");
+        if (TimeText == null)
             Debug.LogWarning("TextField could not be allocated");
     }
 
     void KIvsHumanToggle()
     {
-        if (KiToggle.isOn)
+        if (T_KiToggle.isOn)
         {
             GamePlayHandler.enemyPlayer = PlayerType.Computer;
         }
@@ -319,7 +329,7 @@ public class HUD : MonoBehaviour
     }
     void changeDiff(Slider slider)
     {
-        ConfigurationUtils.changeSettingValue(ConfigurationDataValueName.Difficulty, (int)slider.value);
+        ConfigurationUtils.changeSettingValue(ConfigurationDataValueName.Difficulty, (int)slider.value);    
     }
 
 }

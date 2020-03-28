@@ -27,30 +27,38 @@ public class ConfigurationData
     {
         get { return (int)values[ConfigurationDataValueName.Width]; }
     }
+    int difficulty;
     public int Difficulty
     {
-        get
+        set
         {
-            if (Difficulty == 0)
+            difficulty = value;
+            if (difficulty == 0)
             {
                 GameManager.currentAI_ThinkDepth = (int)values[ConfigurationDataValueName.AIDepthEasy];
                 GameManager.currentAI_ThinkTime = (int)values[ConfigurationDataValueName.AIThinkTimeEasy];
                 GameManager.currentPlayer_ThinkTime = (int)values[ConfigurationDataValueName.PlayerThinkTimeEasy];
             }
-            else if (Difficulty == 1)
+            else if (difficulty == 1)
             {
                 GameManager.currentAI_ThinkDepth = (int)values[ConfigurationDataValueName.AIDepthMedium];
                 GameManager.currentAI_ThinkTime = (int)values[ConfigurationDataValueName.AIThinkTimeMedium];
                 GameManager.currentPlayer_ThinkTime = (int)values[ConfigurationDataValueName.PlayerThinkTimeHard];
             }
-            else if (Difficulty == 2)
+            else if (difficulty == 2)
             {
                 GameManager.currentAI_ThinkDepth = (int)values[ConfigurationDataValueName.AIDepthHard];
                 GameManager.currentAI_ThinkTime = (int)values[ConfigurationDataValueName.AIThinkTimeHard];
                 GameManager.currentPlayer_ThinkTime = (int)values[ConfigurationDataValueName.PlayerThinkTimeHard];
             }
-            return (int)values[ConfigurationDataValueName.Difficulty]; }
+        }
+        get
+        {
+            return (int)values[ConfigurationDataValueName.Difficulty];
+        }
+
     }
+
 
     #endregion
 

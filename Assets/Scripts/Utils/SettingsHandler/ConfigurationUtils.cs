@@ -31,7 +31,12 @@ public static class ConfigurationUtils
         if (b)
         {
             ConfigurationData.values[valueName] = value;
+            if (valueName == ConfigurationDataValueName.Difficulty)
+            {
+                ConfigurationData.Difficulty = (int)value;
+            }
         }
+
     }
 
     #endregion

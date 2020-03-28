@@ -39,6 +39,20 @@ public class Timer : MonoBehaviour
         }
     }
 
+    public float RemainTime
+    {
+        get
+        {
+            float remainTime = totalSeconds - elapsedSeconds;
+            if (remainTime > 0)
+            {
+                return remainTime;
+            }
+            else
+            return 0;
+        }
+    }
+
     /// <summary>
     /// Gets whether or not the timer has finished running
     /// This property returns false if the timer has never been started

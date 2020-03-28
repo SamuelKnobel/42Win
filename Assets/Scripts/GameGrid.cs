@@ -67,8 +67,16 @@ public class GameGrid
     {
         Width = ConfigurationUtils.Width;
         Height = ConfigurationUtils.Height;
-        starposition_x = -(float)Width / 2;
-        starposition_y = -(float)Height / 2;
+        if (Width%2 != 0)
+            starposition_x = -(float)Width / 2;
+        else
+            starposition_x = -(float)Width / 2 -.5f;
+
+
+        if (Height % 2 != 0)
+            starposition_y = -(float)Height / 2 + 0.5f;
+        else
+            starposition_y = -(float)Height / 2;
 
         gridslots = new GridSlot[Width, Height];
         entryslots = new GridSlot[Width];
@@ -82,8 +90,15 @@ public class GameGrid
     {
         Width = width;
         Height = height;
-        starposition_x = -Width / 2;
-        starposition_y = -Height / 2;
+        if (Width % 2 != 0)
+            starposition_x = -(float)Width / 2;
+        else
+            starposition_x = -(float)Width / 2 - .5f;
+
+        if (Height % 2 != 0)
+            starposition_y = -(float)Height / 2 + 0.5f;
+        else
+            starposition_y = -(float)Height / 2 ;
         gridslots = new GridSlot[Width, Height];
         entryslots = new GridSlot[Width];
         GenerateGridSlots();
