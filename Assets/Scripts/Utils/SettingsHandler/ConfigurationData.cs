@@ -36,20 +36,20 @@ public class ConfigurationData
             if (difficulty == 0)
             {
                 GameManager.currentAI_ThinkDepth = (int)values[ConfigurationDataValueName.AIDepthEasy];
-                GameManager.currentAI_ThinkTime = (int)values[ConfigurationDataValueName.AIThinkTimeEasy];
-                GameManager.currentPlayer_ThinkTime = (int)values[ConfigurationDataValueName.PlayerThinkTimeEasy];
+                GameManager.currentAI_ThinkTime = values[ConfigurationDataValueName.AIThinkTimeEasy];
+                GameManager.currentPlayer_ThinkTime = values[ConfigurationDataValueName.PlayerThinkTimeEasy];
             }
             else if (difficulty == 1)
             {
                 GameManager.currentAI_ThinkDepth = (int)values[ConfigurationDataValueName.AIDepthMedium];
-                GameManager.currentAI_ThinkTime = (int)values[ConfigurationDataValueName.AIThinkTimeMedium];
-                GameManager.currentPlayer_ThinkTime = (int)values[ConfigurationDataValueName.PlayerThinkTimeHard];
+                GameManager.currentAI_ThinkTime = values[ConfigurationDataValueName.AIThinkTimeMedium];
+                GameManager.currentPlayer_ThinkTime = values[ConfigurationDataValueName.PlayerThinkTimeHard];
             }
             else if (difficulty == 2)
             {
                 GameManager.currentAI_ThinkDepth = (int)values[ConfigurationDataValueName.AIDepthHard];
-                GameManager.currentAI_ThinkTime = (int)values[ConfigurationDataValueName.AIThinkTimeHard];
-                GameManager.currentPlayer_ThinkTime = (int)values[ConfigurationDataValueName.PlayerThinkTimeHard];
+                GameManager.currentAI_ThinkTime = values[ConfigurationDataValueName.AIThinkTimeHard];
+                GameManager.currentPlayer_ThinkTime = values[ConfigurationDataValueName.PlayerThinkTimeHard];
             }
         }
         get
@@ -86,7 +86,7 @@ public class ConfigurationData
         values.Add(ConfigurationDataValueName.Height, 6);
         values.Add(ConfigurationDataValueName.Width, 9);
         values.Add(ConfigurationDataValueName.Difficulty,0);
-        values.Add(ConfigurationDataValueName.AIThinkTimeEasy,.01f);
+        values.Add(ConfigurationDataValueName.AIThinkTimeEasy,0.01f);
         values.Add(ConfigurationDataValueName.AIThinkTimeMedium,.1f);
         values.Add(ConfigurationDataValueName.AIThinkTimeHard,1f);
         values.Add(ConfigurationDataValueName.PlayerThinkTimeEasy,20f);

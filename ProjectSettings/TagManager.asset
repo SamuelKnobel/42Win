@@ -9,6 +9,8 @@ TagManager:
   - MainMenuContainer
   - SettingsContainer
   - HelpMenuContainer
+  - PauseMenuContainer
+  - EndGameMenuContainer
   layers:
   - Default
   - TransparentFX

@@ -8,6 +8,8 @@ using UnityEngine.SceneManagement;
 using UnityEditor;
 using System;
 using System.Threading;
+using System.Reflection;
+using UnityEngine.XR;
 
 public class HUD : MonoBehaviour
 {
@@ -17,13 +19,25 @@ public class HUD : MonoBehaviour
     [SerializeField]
     GameObject SettingsContainer;
     [SerializeField]
-    GameObject HelpMenuContainer;
+    GameObject HelpMenuContainer;   
+    [SerializeField]
+    GameObject PauseMenuContainer; 
+    [SerializeField]
+    GameObject EndGameMenuContainer;
 
     [SerializeField]    Toggle T_KiToggle;   
     [SerializeField]    Toggle T_HumanToggle;
     [SerializeField]    Slider S_Width;
     [SerializeField]    Slider S_Height;    
     [SerializeField]    Slider S_Difficulty;
+
+    List<Dropdown.OptionData> CoinSpriteDD = new List<Dropdown.OptionData>();
+    [SerializeField] Dropdown ChooseSpritePlayer1;
+    [SerializeField] Dropdown ChooseSpritePlayer2;
+
+
+
+    public List<Sprite> CoinSprites;
 
     [SerializeField]    Text currentPlayerText;
     string PreTextPlayerInfo = "Current Player: ";
@@ -38,25 +52,51 @@ public class HUD : MonoBehaviour
 
     private void Awake()
     {
-
-
-
+        if (CoinSprites.Count > 0)
+        {
+            GameManager.SpritePlayer1 = CoinSprites[0];
+            GameManager.SpritePlayer2 = CoinSprites[CoinSprites.Count - 1];
+        }
     }
+
     // Start is called before the first frame update
     void Start()
     {
-        MainMenuContainer = GameObject.FindGameObjectWithTag("MainMenuContainer");
-        SettingsContainer = GameObject.FindGameObjectWithTag("SettingsContainer");
-        HelpMenuContainer = GameObject.FindGameObjectWithTag("HelpMenuContainer");
+        foreach (var item in CoinSprites)
+        {
+            Dropdown.OptionData newSprite = new Dropdown.OptionData("", item);
+            CoinSpriteDD.Add(newSprite);
+        }
+    }
+
+    public void AllocateUIElementsInMenu()
+    {
+        if (MainMenuContainer == null)
+            MainMenuContainer = GameObject.FindGameObjectWithTag("MainMenuContainer");
+        if (SettingsContainer == null)
+            SettingsContainer = GameObject.FindGameObjectWithTag("SettingsContainer");
+        if (HelpMenuContainer == null)
+            HelpMenuContainer = GameObject.FindGameObjectWithTag("HelpMenuContainer");
+
         allButtons = FindObjectsOfType<Button>();
         allocateGameGUIElements();
+
         if (HelpMenuContainer != null)
             HelpMenuContainer.SetActive(false);
         if (SettingsContainer != null)
             SettingsContainer.SetActive(false);
+    }
+    public void AllocateUIElementsInGame()
+    {
+        allocateGameGUIElements();
 
-        GameManager.currentGamestate = GameStates.InMainMenu;
+            PauseMenuContainer = GameObject.FindGameObjectWithTag("PauseMenuContainer");
+        if (PauseMenuContainer != null)
+            PauseMenuContainer.SetActive(false);
 
+            EndGameMenuContainer = GameObject.FindGameObjectWithTag("EndGameMenuContainer");
+        if (EndGameMenuContainer != null)
+            EndGameMenuContainer.SetActive(false);
     }
 
     // Update is called once per frame
@@ -67,16 +107,34 @@ public class HUD : MonoBehaviour
             GamePlayHandler handler = FindObjectOfType<GamePlayHandler>();
             if (handler != null)
             {
-                TimeText.text = PreTextTime + Mathf.Round(handler.RemainingTime.RemainTime);
+                if (TimeText != null)
+                {
+                    if (GamePlayHandler.currentPlayer == PlayerName.Player2 && GamePlayHandler.enemyPlayer == EnemyType.Computer)
+                    {
+                        TimeText.text = PreTextTime + Mathf.Round(handler.RemainingTimeAIMove.RemainTime);
+                    }
+                    else
+                        TimeText.text = PreTextTime + Mathf.Round(handler.RemainingTime.RemainTime);
+                }
             }
         }
- 
+        if (GameManager.currentGamestate == GameStates.InGame|| GameManager.currentGamestate == GameStates.GameEnd)
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                PauseMenuContainer.SetActive(true);
+                Time.timeScale = 0;
+            }
+        }
     }
 
     // TODO: Solve it with events!
     public void ShowPlayerInfo()
     {
-        currentPlayerText.text = PreTextPlayerInfo + GamePlayHandler.currentPlayer;
+        if (currentPlayerText!= null)
+        {
+            currentPlayerText.text = PreTextPlayerInfo + GamePlayHandler.currentPlayer;
+        }
     }
 
     public void ShowPlayerWin()
@@ -85,35 +143,40 @@ public class HUD : MonoBehaviour
         currentPlayerText.gameObject.SetActive(false);
         WinText.text = PreTextPlayerWin + GamePlayHandler.currentPlayer;
 
+        if (GamePlayHandler.currentPlayer == PlayerName.Player1 && GamePlayHandler.enemyPlayer == EnemyType.Computer )
+            Audiomanager.PlaySound(Audiomanager.Sounds.Win);
+        else if (GamePlayHandler.currentPlayer == PlayerName.Player2 && GamePlayHandler.enemyPlayer == EnemyType.Computer)
+            Audiomanager.PlaySound(Audiomanager.Sounds.Loose);
+
     }
 
-    //TODO: Has to Start if the GameScene has loded
-    public void StartGame()
+
+    public void ShowEndGameMenu()
     {
-        T_KiToggle.gameObject.SetActive(false);        
-        FindObjectOfType<GamePlayHandler>().StartGame();        
+        EndGameMenuContainer.SetActive(true);
     }
-
     public void KIvsMultiplayer(bool toggle)
     {
         if (toggle)
         {
-            GamePlayHandler.enemyPlayer = PlayerType.Computer;
+            GamePlayHandler.enemyPlayer = EnemyType.Computer;
         }
         else
         {
-            GamePlayHandler.enemyPlayer = PlayerType.Human;
+            GamePlayHandler.enemyPlayer = EnemyType.Human;
         }
     }
 
     public void ButtonFunctions()
     {
+        Audiomanager.PlaySound(Audiomanager.Sounds.Button);
         string currentname = EventSystem.current.currentSelectedGameObject.name;
 
         switch (currentname.ToLower())
         {
             case "start":
                 SceneManager.LoadScene("GamePlay");
+                GameManager.SwitchStateTo(GameStates.LoadGame);
                 break;
             case "exit":
                 if (GameManager.currentGamestate == GameStates.InGame|| GameManager.currentGamestate == GameStates.InMainMenu)
@@ -126,27 +189,51 @@ public class HUD : MonoBehaviour
                     HelpMenuContainer.SetActive(false);
                     SettingsContainer.SetActive(false);
                     MainMenuContainer.SetActive(true);
-                    GameManager.currentGamestate = GameStates.InMainMenu;
+                    GameManager.SwitchStateTo(GameStates.InMainMenu);
                 }
                 break;
             case "settings":
-                GameManager.currentGamestate = GameStates.InSettings;
+                GameManager.SwitchStateTo(GameStates.InSettings);
                 HelpMenuContainer.SetActive(false);
                 SettingsContainer.SetActive(true);
                 MainMenuContainer.SetActive(false);
                 break;
             case "help":
-                GameManager.currentGamestate = GameStates.InHelp;
+                GameManager.SwitchStateTo(GameStates.InHelp);
                 HelpMenuContainer.SetActive(true);
                 SettingsContainer.SetActive(false);
                 MainMenuContainer.SetActive(false);
                 break;
+            case "resume":
+                PauseMenuContainer.SetActive(false);
+                Time.timeScale = 1;
+                break;           
+            case "backtomenu":
+                Time.timeScale = 1;
+                SceneManager.LoadScene("Menu");
+                GameManager.SwitchStateTo(GameStates.LoadMenu);
+                break;
+            case "restart":
+                
+                ResetScene();
+                GameManager.SwitchStateTo(GameStates.LoadGame);
+                break;
+
             default:
                 Debug.LogWarning("Button: " + currentname + " not defined");
                 break;
         }
     }
 
+    void ResetScene()
+    {
+        Time.timeScale = 1;
+        EndGameMenuContainer.SetActive(true);
+        PauseMenuContainer.SetActive(true);
+        currentPlayerText.gameObject.SetActive(true);
+
+
+    }
     public Button FindButtonByName(string buttonName)
     {
         Button result = null;
@@ -199,6 +286,7 @@ public class HUD : MonoBehaviour
         AllocateToggels();
         AllocateText();
         AllocateSlider();
+        AllocateDropdown();
 
     }
 
@@ -275,6 +363,45 @@ public class HUD : MonoBehaviour
             Debug.LogWarning("Difficulty could not be allocated");
         }
     }
+    void AllocateDropdown()
+    {
+        Dropdown[] D = FindObjectsOfType<Dropdown>();
+        foreach (Dropdown d in D)
+        {
+            if (d.name == "DDPlayer1Sprite")
+            {
+                ChooseSpritePlayer1 = d;
+                ChooseSpritePlayer1.ClearOptions();
+                ChooseSpritePlayer1.AddOptions(CoinSpriteDD);
+
+                ChooseSpritePlayer1.onValueChanged.AddListener(delegate {
+                    changeSprite(PlayerName.Player1, ChooseSpritePlayer1.value);
+                });
+                int i1 = CoinSprites.FindIndex(x => x == GameManager.SpritePlayer1);
+                ChooseSpritePlayer1.value = i1;
+            }         
+            if (d.name == "DDPlayer2Sprite")
+            {
+                ChooseSpritePlayer2 = d;
+                ChooseSpritePlayer2.ClearOptions();
+                ChooseSpritePlayer2.AddOptions(CoinSpriteDD);
+                ChooseSpritePlayer2.onValueChanged.AddListener(delegate {
+                    changeSprite(PlayerName.Player2, ChooseSpritePlayer2.value);
+                });
+                int i2 = CoinSprites.FindIndex(x => x == GameManager.SpritePlayer2);
+                ChooseSpritePlayer2.value = i2;
+            }
+        }
+
+        if (ChooseSpritePlayer1 == null)
+        {
+            Debug.LogWarning("ChooseSpritePlayer1 could not be allocated");
+        }
+        if (ChooseSpritePlayer2 == null)
+        {
+            Debug.LogWarning("ChooseSpritePlayer2 could not be allocated");
+        }
+    }
     void AllocateText()
     {
         Text[] texts = FindObjectsOfType<Text>();
@@ -292,31 +419,27 @@ public class HUD : MonoBehaviour
             if (t.name == "TimeInfoText")
             {
                 TimeText = t;
-                //TimeText.gameObject.SetActive(false);
             }
-
         }
 
         if (currentPlayerText == null)
-            Debug.LogWarning("TextField could not be allocated");
+            Debug.LogWarning("Player TextField could not be allocated");
         if (WinText == null)
-            Debug.LogWarning("TextField could not be allocated");
+            Debug.LogWarning("Win TextField could not be allocated");
         if (TimeText == null)
-            Debug.LogWarning("TextField could not be allocated");
+            Debug.LogWarning("Time TextField could not be allocated");
     }
 
     void KIvsHumanToggle()
     {
         if (T_KiToggle.isOn)
         {
-            GamePlayHandler.enemyPlayer = PlayerType.Computer;
+            GamePlayHandler.enemyPlayer = EnemyType.Computer;
         }
         else 
         {
-            GamePlayHandler.enemyPlayer = PlayerType.Human;
+            GamePlayHandler.enemyPlayer = EnemyType.Human;
         }
-        print(GamePlayHandler.enemyPlayer);
-
     }
 
     void changeWidth(Slider slider)
@@ -330,6 +453,22 @@ public class HUD : MonoBehaviour
     void changeDiff(Slider slider)
     {
         ConfigurationUtils.changeSettingValue(ConfigurationDataValueName.Difficulty, (int)slider.value);    
+    }
+    void changeSprite(PlayerName playerName, int spriteIndex)
+    {
+        switch (playerName)
+        {
+            case PlayerName.Player1:
+                GameManager.SpritePlayer1 = CoinSprites[spriteIndex];
+                break;
+            case PlayerName.Player2:
+                GameManager.SpritePlayer2 = CoinSprites[spriteIndex];
+                break;
+            case PlayerName.Empty:
+                break;
+            default:
+                break;
+        }
     }
 
 }

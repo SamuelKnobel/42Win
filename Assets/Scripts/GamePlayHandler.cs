@@ -8,13 +8,9 @@ public class GamePlayHandler : MonoBehaviour
     GameGrid GameGrid;
     [SerializeField]
     GameObject CoinPrefab;  
-    [SerializeField]
-    GameObject ArrowPrefab;
 
     [SerializeField]
     GameObject currentCoin;
-    [SerializeField]
-    GameObject coinToMove;
 
     //bool startMovement;
     [SerializeField]
@@ -37,46 +33,61 @@ public class GamePlayHandler : MonoBehaviour
     int currentCollum;
 
     public Timer RemainingTime;
+    public Timer RemainingTimeAIMove;
 
     public static PlayerName currentPlayer = PlayerName.Player2;
-    public static PlayerType enemyPlayer = PlayerType.Human;
+    public static EnemyType enemyPlayer = EnemyType.Human;
 
     public List<GameObject> StackPlayer1 = new List<GameObject>();
     public List<GameObject> StackPlayer2 = new List<GameObject>();
 
+    int numberofTry = 0;
 
     // Start is called before the first frame update
     void Start()
     {
-        StartGame();
+        RemainingTime = gameObject.AddComponent<Timer>();
+        RemainingTimeAIMove = gameObject.AddComponent<Timer>();
+        
 
-        //Debug.Log(GameGrid.EmptySlots.Count);
-        //Debug.Log(GameGrid.FullSlots.Count);
+        //StartGame();
+        Debug.Log("StartCalled");
     }
    public void StartGame()
     {
-        RemainingTime = gameObject.AddComponent<Timer>();
-
-
-
+        foreach (Transform child in Stack1.transform)
+        {
+            Destroy(child.gameObject);
+        }
+        foreach (Transform child in Stack2.transform)
+        {
+            Destroy(child.gameObject);
+        }
+        foreach (Transform child in FieldContainer.transform)
+        {
+            Destroy(child.gameObject);
+        }
+        if (GameGrid != null)
+        {
+            GameGrid.AllEntrySlots = null;
+            GameGrid.gridslots = null;
+        }
         GameGrid = new GameGrid();
-
         GeneratePlayerCoinStacks();
-
-        changePlayer();
-
-        GameManager.currentGamestate = GameStates.InGame;
-
+        changeToHumanPlayer();
     }
 
     void GeneratePlayerCoinStacks()
     {
+        StackPlayer1.Clear();
+        StackPlayer2.Clear();
+
         for (int i = 0; i < GameGrid.NbOfCells/2; i++)
         {
             GameObject NewCoinP1 = Instantiate(CoinPrefab);
             NewCoinP1.transform.position = new Vector3(GameGrid.startPosition.x - 1, GameGrid.startPosition.y, 0);
             NewCoinP1.tag = "Coin";
-            NewCoinP1.GetComponent<MeshRenderer>().material = Material_P1;
+            NewCoinP1.GetComponent<SpriteRenderer>().sprite = GameManager.SpritePlayer1;
             NewCoinP1.transform.SetParent(Stack1.transform);
             NewCoinP1.GetComponent<Coin>().owner = PlayerName.Player1;
             StackPlayer1.Add(NewCoinP1);
@@ -84,7 +95,7 @@ public class GamePlayHandler : MonoBehaviour
             GameObject newCoinP2 = Instantiate(CoinPrefab);
             newCoinP2.transform.position = new Vector3(-GameGrid.startPosition.x + 1, GameGrid.startPosition.y, 0);
             newCoinP2.tag = "Coin";
-            newCoinP2.GetComponent<MeshRenderer>().material = Material_P2;
+            newCoinP2.GetComponent<SpriteRenderer>().sprite = GameManager.SpritePlayer2;
             newCoinP2.transform.SetParent(Stack2.transform);
             newCoinP2.GetComponent<Coin>().owner = PlayerName.Player2;
             StackPlayer2.Add(newCoinP2);
@@ -95,24 +106,6 @@ public class GamePlayHandler : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //if (Input.GetMouseButtonDown(0) & currentCoin == null)
-        //{
-        //    CollectCoin();
-        //}
-        //MoveCoin();
-        //if (Input.GetMouseButtonUp(0) & currentCoin != null)
-        //{
-        //    ReleaseCoin();
-        //}
-        //if (coinToMove != null)
-        //{
-        //    if (Input.GetMouseButtonDown(0))
-        //    {
-        //        ConfirmCoinPosition();
-        //        //Debug.Log(GameGrid.EmptySlots.Count);
-        //        //Debug.Log(GameGrid.FullSlots.Count);
-        //    }
-        //}
         if (GameManager.currentGamestate == GameStates.InGame)
         {
             if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
@@ -125,11 +118,24 @@ public class GamePlayHandler : MonoBehaviour
             }
             if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
             {
-                DropCoin();
+                if (enemyPlayer == EnemyType.Computer)
+                {
+                    if (currentPlayer == PlayerName.Player1)
+                    {
+                        DropCoin();
+                    }
+                }
+                else
+                    DropCoin();
             }
-            if (RemainingTime.Finished)
+
+            if (RemainingTime.Finished&& currentPlayer == PlayerName.Player1)
             {
-                RandomMove();
+                RandomHumanMove();
+            }
+            if (RemainingTimeAIMove.Finished && currentPlayer == PlayerName.Player2)
+            {
+                ComputerMove();
             }
         }
 
@@ -160,91 +166,45 @@ public class GamePlayHandler : MonoBehaviour
         {
             currentCoin.transform.SetParent(FieldContainer.transform);
             CheckIfWin();
-            changePlayer();
+            changeToHumanPlayer();
+            Audiomanager.PlaySound(Audiomanager.Sounds.Drop);
         }
     }
 
-    void CollectCoin()
-    {
-        //coinToMove = null;
-        RaycastHit hit;
-        var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
-        if (Physics.Raycast(ray, out hit))
-        {
-            if (hit.collider.tag == "Coin")
-            {
-                currentCoin = hit.collider.gameObject;
-            }
-        }
-    }
-
-    void MoveCoin()
-    {
-        if (currentCoin != null)
-        {
-            Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            currentCoin.transform.position = new Vector3(pos.x, pos.y, 0);
-        }
-    }
-
-    void ReleaseCoin()
-    {
-        GridSlot gS = getCurrentEntryslot();
-        if (gS != null)
-        {
-            coinToMove = currentCoin;
-            currentCollum = (int)gS.LocalPosition.x;
-            //gS.SetCoinToPosition(currentCoin.gameObject);
-            if (GameGrid.AddCoinAtPosition(currentCollum, coinToMove.GetComponent<Coin>()))
-            {
-                coinToMove.transform.SetParent(FieldContainer.transform);
-                CheckIfWin();
-                changePlayer();
-            }
-        }
-       
-        currentCoin = null;
-    }
-
-    GridSlot getCurrentEntryslot()
-    {
-        for (int i = 0; i < GameGrid.AllEntrySlots.Count; i++)
-        {
-            if (GameGrid.AllEntrySlots[i].IsMouseOver())
-            {
-                return (GameGrid.AllEntrySlots[i]);
-            }
-        }
-        return null;
-    }
-
-    int numberofTry = 0;
-    void RandomMove()
+    
+    void RandomHumanMove()
     {
         if (GameGrid.AddCoinAtPosition(Random.Range(0, GameGrid.entryslots.Length), currentCoin.GetComponent<Coin>()))
         {
             currentCoin.transform.SetParent(FieldContainer.transform);
             CheckIfWin();
-            changePlayer();
+            changeToHumanPlayer();
         }
         else if (numberofTry<10)
         {
             numberofTry++;
-            RandomMove();
+            RandomHumanMove();
+        }
+    }
+    void ComputerMove()
+    {
+        if (GameGrid.AddCoinAtPosition(Random.Range(0, GameGrid.entryslots.Length), currentCoin.GetComponent<Coin>()))
+        {
+            currentCoin.transform.SetParent(FieldContainer.transform);
+            CheckIfWin();
+            changeToHumanPlayer();
+        }
+        else if (numberofTry < 10)
+        {
+            numberofTry++;
+            ComputerMove();
         }
     }
         
-    public void changePlayer()
+    public void changeToHumanPlayer()
     {
-        if (enemyPlayer == PlayerType.Human)
-            RemainingTime.Duration = GameManager.currentPlayer_ThinkTime;
-        else if (enemyPlayer == PlayerType.Computer)
-            RemainingTime.Duration = GameManager.currentAI_ThinkTime;
-        print(GameManager.currentPlayer_ThinkTime);
-        print(GameManager.currentAI_ThinkTime);
-
-
+        numberofTry = 0;
+        RemainingTime.Duration = GameManager.currentPlayer_ThinkTime;
         RemainingTime.Run();
         if (currentPlayer.Equals(PlayerName.Player1))
         {
@@ -275,8 +235,19 @@ public class GamePlayHandler : MonoBehaviour
             currentCoin.transform.position = GameGrid.entryslots[GameGrid.entryslots.Length - 1].WorldPosition_Center;
             currentCollum = GameGrid.entryslots.Length - 1;
         }
+        if (currentPlayer == PlayerName.Player2 && enemyPlayer == EnemyType.Computer)
+        {
+            ChangeToComputerPlayer();
+        }
+    }
 
-
+    public void ChangeToComputerPlayer()
+    {
+        numberofTry = 0;
+        RemainingTimeAIMove.Duration = 2;
+        RemainingTimeAIMove.Run();
+        RemainingTime.Duration = 3.01f;
+        RemainingTime.Run();
 
     }
 
@@ -292,8 +263,8 @@ public class GamePlayHandler : MonoBehaviour
                 {
                     Debug.Log("Win" + currentPlayer);
                     //GameElementsContainer.SetActive(false);
-                    FindObjectOfType<HUD>().ShowPlayerWin();
-                    GameManager.currentGamestate = GameStates.GameEnd;
+                    FindObjectOfType<HUD>().ShowEndGameMenu();
+                    GameManager.SwitchStateTo(GameStates.GameEnd);
                     break;
 
                 }

@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PlayerType 
+public class Coin : MonoBehaviour
 {
-    Human, Computer
+
+    public PlayerName owner;
+
+
 }

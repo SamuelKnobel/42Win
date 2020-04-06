@@ -25,7 +25,7 @@ public class EnvironmentGenerator : MonoBehaviour
 
     }
 
-    void BuildEnvironemt()
+    public void BuildEnvironemt()
     {
         EnvironmentContainer = GameObject.Find("Environment");
 

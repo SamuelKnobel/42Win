@@ -3,10 +3,11 @@ using System.Collections;
 
 public enum GameStates 
 {
-    LoadGame,
+    LoadMenu,
     InMainMenu,
     InSettings,
     InHelp,
+    LoadGame,
     InGame,
     GameEnd
 }
