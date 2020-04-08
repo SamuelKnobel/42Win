@@ -69,7 +69,7 @@
     <Compile Include="Assets\Scripts\AI\MinimaxTreeNode.cs" />
     <Compile Include="Assets\Scripts\Audiomanager.cs" />
     <Compile Include="Assets\Scripts\Enums\EnemyType.cs" />
-    <Compile Include="Assets\Scripts\Enums\GameStates.cs" />
+    <Compile Include="Assets\Scripts\Enums\InGameStates.cs" />
     <Compile Include="Assets\Scripts\Enums\PlayerName.cs" />
     <Compile Include="Assets\Scripts\EnvironmentGenerator.cs" />
     <Compile Include="Assets\Scripts\Event\EventManager.cs" />
@@ -80,7 +80,13 @@
     <Compile Include="Assets\Scripts\Grid\GridSlot.cs" />
     <Compile Include="Assets\Scripts\HUD.cs" />
     <Compile Include="Assets\Scripts\Manager\GameManager.cs" />
+    <Compile Include="Assets\Scripts\States\GamePlayStates.cs" />
+    <Compile Include="Assets\Scripts\States\GameStates.cs" />
+    <Compile Include="Assets\Scripts\States\MenuStates.cs" />
+    <Compile Include="Assets\Scripts\States\States.cs" />
+    <Compile Include="Assets\Scripts\States\TurnState.cs" />
     <Compile Include="Assets\Scripts\Utils\Difficulty.cs" />
+    <Compile Include="Assets\Scripts\Utils\Enumeration.cs" />
     <Compile Include="Assets\Scripts\Utils\GameInitializer.cs" />
     <Compile Include="Assets\Scripts\Utils\Mover.cs" />
     <Compile Include="Assets\Scripts\Utils\ScreenUtils.cs" />

@@ -10,7 +10,6 @@ using System;
 using System.Threading;
 using System.Reflection;
 using UnityEngine.XR;
-
 public class HUD : MonoBehaviour
 {
     // UI Elements
@@ -25,8 +24,9 @@ public class HUD : MonoBehaviour
     [SerializeField]
     GameObject EndGameMenuContainer;
 
-    [SerializeField]    Toggle T_KiToggle;   
-    [SerializeField]    Toggle T_HumanToggle;
+    [SerializeField]    Toggle T_Ki;   
+    [SerializeField]    Toggle T_Human;
+    [SerializeField]    Toggle T_MoveBack;
     [SerializeField]    Slider S_Width;
     [SerializeField]    Slider S_Height;    
     [SerializeField]    Slider S_Difficulty;
@@ -36,6 +36,7 @@ public class HUD : MonoBehaviour
     [SerializeField] Dropdown ChooseSpritePlayer2;
 
 
+    [SerializeField] bool b_showMoveBackButton;
 
     public List<Sprite> CoinSprites;
 
@@ -49,6 +50,53 @@ public class HUD : MonoBehaviour
 
     [SerializeField]
     Button[] allButtons;
+    [SerializeField] bool ButtonsUIDefined;
+    [SerializeField] bool ButtonsGameDefined;
+
+    private void OnEnable()
+    {
+        EventManager.MenuLoadingCompleteEvent += MenuLoadingComplete;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+    private void OnDisable()
+    {
+        EventManager.MenuLoadingCompleteEvent -= MenuLoadingComplete;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void MenuLoadingComplete()
+    {
+        States.SetMenuState(States.Enum.Menu_InMenu);
+        States.SetGamePlayState(States.Enum.MultiPlayer);
+    }
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "Menu")
+        {
+            Button[] buttons = FindObjectsOfType<Button>();
+            foreach (Button b in buttons)
+            {
+                b.onClick.RemoveAllListeners();
+            }
+            AllocateUIElementsInMenu();
+            EventManager.CallMenuLoadingCompleteEvent();
+        }
+        if (scene.name == "GamePlay")
+        {
+            Button[] buttons = FindObjectsOfType<Button>();
+            foreach (Button b in buttons)
+            {
+                b.onClick.RemoveAllListeners();
+            }       
+            AllocateUIElementsInGame();
+            States.ResetState(States.currentMenuState);
+            States.SetGameState(States.Enum.Game_InGame);
+            FindObjectOfType<GamePlayHandler>().StartGame();
+            // TODO EVENT CALL
+        }
+    }
+
+
 
     private void Awake()
     {
@@ -57,16 +105,17 @@ public class HUD : MonoBehaviour
             GameManager.SpritePlayer1 = CoinSprites[0];
             GameManager.SpritePlayer2 = CoinSprites[CoinSprites.Count - 1];
         }
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
         foreach (var item in CoinSprites)
         {
             Dropdown.OptionData newSprite = new Dropdown.OptionData("", item);
             CoinSpriteDD.Add(newSprite);
         }
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+
     }
 
     public void AllocateUIElementsInMenu()
@@ -88,28 +137,34 @@ public class HUD : MonoBehaviour
     }
     public void AllocateUIElementsInGame()
     {
+        allButtons = FindObjectsOfType<Button>();
         allocateGameGUIElements();
 
+        if (PauseMenuContainer == null)
             PauseMenuContainer = GameObject.FindGameObjectWithTag("PauseMenuContainer");
         if (PauseMenuContainer != null)
             PauseMenuContainer.SetActive(false);
 
+        if (EndGameMenuContainer == null)
             EndGameMenuContainer = GameObject.FindGameObjectWithTag("EndGameMenuContainer");
         if (EndGameMenuContainer != null)
             EndGameMenuContainer.SetActive(false);
+
+            FindButtonByName("TakeMoveBack").gameObject.SetActive(b_showMoveBackButton);
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (GameManager.currentGamestate == GameStates.InGame)
+        if (States.compareState(States.currentGameState, States.Enum.Game_InGame))
         {
             GamePlayHandler handler = FindObjectOfType<GamePlayHandler>();
             if (handler != null)
             {
                 if (TimeText != null)
                 {
-                    if (GamePlayHandler.currentPlayer == PlayerName.Player2 && GamePlayHandler.enemyPlayer == EnemyType.Computer)
+                    if (GameManager.currentPlayer == PlayerName.Player2 && GameManager.enemyPlayer == EnemyType.Computer)
                     {
                         TimeText.text = PreTextTime + Mathf.Round(handler.RemainingTimeAIMove.RemainTime);
                     }
@@ -118,7 +173,7 @@ public class HUD : MonoBehaviour
                 }
             }
         }
-        if (GameManager.currentGamestate == GameStates.InGame|| GameManager.currentGamestate == GameStates.GameEnd)
+        if (States.compareState(States.currentGameState,States.Enum.Game_InGame) || States.compareState(States.currentGameState, States.Enum.Game_End))
         {
             if (Input.GetKeyDown(KeyCode.Escape))
             {
@@ -133,7 +188,7 @@ public class HUD : MonoBehaviour
     {
         if (currentPlayerText!= null)
         {
-            currentPlayerText.text = PreTextPlayerInfo + GamePlayHandler.currentPlayer;
+            currentPlayerText.text = PreTextPlayerInfo + GameManager.currentPlayer;
         }
     }
 
@@ -141,30 +196,18 @@ public class HUD : MonoBehaviour
     {
         WinText.gameObject.SetActive(true);
         currentPlayerText.gameObject.SetActive(false);
-        WinText.text = PreTextPlayerWin + GamePlayHandler.currentPlayer;
+        WinText.text = PreTextPlayerWin + GameManager.currentPlayer;
 
-        if (GamePlayHandler.currentPlayer == PlayerName.Player1 && GamePlayHandler.enemyPlayer == EnemyType.Computer )
+        if (GameManager.currentPlayer == PlayerName.Player1 && GameManager.enemyPlayer == EnemyType.Computer )
             Audiomanager.PlaySound(Audiomanager.Sounds.Win);
-        else if (GamePlayHandler.currentPlayer == PlayerName.Player2 && GamePlayHandler.enemyPlayer == EnemyType.Computer)
+        else if (GameManager.currentPlayer == PlayerName.Player2 && GameManager.enemyPlayer == EnemyType.Computer)
             Audiomanager.PlaySound(Audiomanager.Sounds.Loose);
 
     }
 
-
     public void ShowEndGameMenu()
     {
         EndGameMenuContainer.SetActive(true);
-    }
-    public void KIvsMultiplayer(bool toggle)
-    {
-        if (toggle)
-        {
-            GamePlayHandler.enemyPlayer = EnemyType.Computer;
-        }
-        else
-        {
-            GamePlayHandler.enemyPlayer = EnemyType.Human;
-        }
     }
 
     public void ButtonFunctions()
@@ -172,34 +215,37 @@ public class HUD : MonoBehaviour
         Audiomanager.PlaySound(Audiomanager.Sounds.Button);
         string currentname = EventSystem.current.currentSelectedGameObject.name;
 
+    
+
         switch (currentname.ToLower())
         {
             case "start":
                 SceneManager.LoadScene("GamePlay");
-                GameManager.SwitchStateTo(GameStates.LoadGame);
+                States.SetGameState(States.Enum.Game_Loading);
                 break;
             case "exit":
-                if (GameManager.currentGamestate == GameStates.InGame|| GameManager.currentGamestate == GameStates.InMainMenu)
+                if (States.compareState(States.currentGameState, States.Enum.Game_InGame) || States.compareState(States.currentMenuState, States.Enum.Menu_InMenu))
                 {
                     Debug.Log("Quit");
                     Application.Quit();
                 }
-                else if(GameManager.currentGamestate == GameStates.InHelp|| GameManager.currentGamestate == GameStates.InSettings)
+                else if (States.compareState(States.currentMenuState, States.Enum.Menu_Help) || States.compareState(States.currentMenuState, States.Enum.Menu_Settings))
                 {
                     HelpMenuContainer.SetActive(false);
                     SettingsContainer.SetActive(false);
                     MainMenuContainer.SetActive(true);
-                    GameManager.SwitchStateTo(GameStates.InMainMenu);
+                    States.SetMenuState(States.Enum.Menu_InMenu);
                 }
                 break;
             case "settings":
-                GameManager.SwitchStateTo(GameStates.InSettings);
+                States.SetMenuState(States.Enum.Menu_Settings);
                 HelpMenuContainer.SetActive(false);
                 SettingsContainer.SetActive(true);
                 MainMenuContainer.SetActive(false);
                 break;
             case "help":
-                GameManager.SwitchStateTo(GameStates.InHelp);
+                States.SetMenuState(States.Enum.Menu_Help);
+                print(HelpMenuContainer);
                 HelpMenuContainer.SetActive(true);
                 SettingsContainer.SetActive(false);
                 MainMenuContainer.SetActive(false);
@@ -210,13 +256,18 @@ public class HUD : MonoBehaviour
                 break;           
             case "backtomenu":
                 Time.timeScale = 1;
+                States.SetMenuState(States.Enum.Menu_Loading);
                 SceneManager.LoadScene("Menu");
-                GameManager.SwitchStateTo(GameStates.LoadMenu);
+                States.ResetState(States.currentGameState);
+                States.ResetState(States.currentTurnState);
                 break;
             case "restart":
-                
+                States.SetGameState(States.Enum.Game_Loading);
                 ResetScene();
-                GameManager.SwitchStateTo(GameStates.LoadGame);
+                break;   
+            case "takemoveback":
+
+                Debug.Log("one Move back");
                 break;
 
             default:
@@ -228,11 +279,11 @@ public class HUD : MonoBehaviour
     void ResetScene()
     {
         Time.timeScale = 1;
-        EndGameMenuContainer.SetActive(true);
-        PauseMenuContainer.SetActive(true);
+        EndGameMenuContainer.SetActive(false);
+        PauseMenuContainer.SetActive(false);
         currentPlayerText.gameObject.SetActive(true);
-
-
+        States.SetGameState(States.Enum.Game_InGame);
+        FindObjectOfType<GamePlayHandler>().StartGame();
     }
     public Button FindButtonByName(string buttonName)
     {
@@ -243,13 +294,15 @@ public class HUD : MonoBehaviour
         }
         else
         {
-
             foreach (Button b in allButtons)
             {
-                if (b.name.Equals(buttonName))
+                if (b!= null)
                 {
-                    result = b;
-                    break;
+                    if (b.name.Equals(buttonName))
+                    {
+                        result = b;
+                        break;
+                    }
                 }
             }
         }
@@ -278,16 +331,20 @@ public class HUD : MonoBehaviour
     //TODO:To be allocated if switched into GameScene
     void allocateGameGUIElements()
     {
-        Button[] buttons = FindObjectsOfType<Button>();
-        foreach (Button b in buttons)
-        {
-            b.onClick.AddListener(() => ButtonFunctions());
-        }
+        allocateButtonsFunctions();
         AllocateToggels();
         AllocateText();
         AllocateSlider();
         AllocateDropdown();
 
+    }
+    void allocateButtonsFunctions()
+    {
+        Button[] buttons = FindObjectsOfType<Button>();
+        foreach (Button b in buttons)
+        {
+            b.onClick.AddListener(() => ButtonFunctions());
+        }
     }
 
 
@@ -298,25 +355,34 @@ public class HUD : MonoBehaviour
         {
             if (t.name == "KI")
             {
-                T_KiToggle = t;
-                T_KiToggle.onValueChanged.AddListener(delegate {KIvsHumanToggle();});
+                T_Ki = t;
+                T_Ki.onValueChanged.AddListener(delegate {KIvsHumanToggle();});
             }
             if (t.name == "Human")
             {
-                T_HumanToggle = t;
+                T_Human = t;
             }
-            if (T_KiToggle != null && T_HumanToggle != null)
+            if (t.name == "ShowMoveBackButton")
+            {
+                T_MoveBack = t;
+                T_MoveBack.onValueChanged.AddListener(delegate { ShowMoveBackButtonToggle(); });
+            }
+            if (T_Ki != null && T_Human != null && T_MoveBack != null)
             {
                 break;
             }
         }
-        if (T_KiToggle == null)
+        if (T_Ki == null)
         {
             Debug.LogWarning("KI Toggle could not be allocated");
         }
-        if (T_HumanToggle == null)
+        if (T_Human == null)
         {
             Debug.LogWarning("Human Toggle could not be allocated");
+        }    
+        if (T_MoveBack == null)
+        {
+            Debug.LogWarning("MoveBack Toggle could not be allocated");
         }
     }
     void AllocateSlider()
@@ -432,16 +498,26 @@ public class HUD : MonoBehaviour
 
     void KIvsHumanToggle()
     {
-        if (T_KiToggle.isOn)
+        if (T_Ki.isOn)
         {
-            GamePlayHandler.enemyPlayer = EnemyType.Computer;
+            States.SetGamePlayState(States.Enum.SinglePlayer);
+            GameManager.enemyPlayer = EnemyType.Computer;
         }
         else 
         {
-            GamePlayHandler.enemyPlayer = EnemyType.Human;
+            GameManager.enemyPlayer = EnemyType.Human;
+            States.SetGamePlayState(States.Enum.MultiPlayer);
         }
     }
 
+    void ShowMoveBackButtonToggle()
+    {
+        if (T_MoveBack.isOn)
+            b_showMoveBackButton = true;
+        else
+            b_showMoveBackButton = false;
+
+    }
     void changeWidth(Slider slider)
     {
         ConfigurationUtils.changeSettingValue(ConfigurationDataValueName.Width, (int)slider.value);

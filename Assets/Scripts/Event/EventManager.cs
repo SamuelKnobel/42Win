@@ -2,17 +2,57 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EventManager : MonoBehaviour
+public static class EventManager 
 {
-    // Start is called before the first frame update
-    void Start()
+
+    #region Events without Input
+    public delegate void EventAction();
+
+    public static event EventAction MenuLoadingCompleteEvent;
+
+    public static void CallMenuLoadingCompleteEvent()
     {
-        
+        if (MenuLoadingCompleteEvent != null)
+        {
+            MenuLoadingCompleteEvent.Invoke();
+        }
+        else
+            Debug.LogWarning("No Listener for CallMenuLoadingCompleteEvent");
     }
 
-    // Update is called once per frame
-    void Update()
+
+
+    #endregion
+
+
+
+    #region Events with Float  Input
+    public delegate void FloatEventAction(float input);
+
+
+
+    #endregion
+
+
+
+    #region Events with State  Input
+    public delegate void StateEventAction(States input);
+
+    public static event StateEventAction StateSwitchEvent;
+
+    public static void CallStateSwitchEvent(States states)
     {
-        
+        if (StateSwitchEvent!= null)
+        {
+            StateSwitchEvent.Invoke(states);
+        }
+        else
+            Debug.LogWarning("No Listener for CallStateSwitchEvent");
     }
+
+
+
+    #endregion
+
+
 }

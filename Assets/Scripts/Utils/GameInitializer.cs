@@ -17,5 +17,6 @@ public class GameInitializer : MonoBehaviour
         ScreenUtils.Initialize();
         ConfigurationUtils.Initialize();
         ScreenUtils.addWalls();
+        States.Init();
     }
 }

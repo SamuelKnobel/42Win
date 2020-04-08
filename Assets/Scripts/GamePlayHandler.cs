@@ -4,20 +4,12 @@ using UnityEngine;
 
 public class GamePlayHandler : MonoBehaviour
 {
-
     GameGrid GameGrid;
     [SerializeField]
     GameObject CoinPrefab;  
 
     [SerializeField]
     GameObject currentCoin;
-
-    //bool startMovement;
-    [SerializeField]
-    Material Material_P1;
-    [SerializeField]
-    Material Material_P2;
-
 
     [SerializeField]
     GameObject Stack1;   
@@ -35,23 +27,17 @@ public class GamePlayHandler : MonoBehaviour
     public Timer RemainingTime;
     public Timer RemainingTimeAIMove;
 
-    public static PlayerName currentPlayer = PlayerName.Player2;
-    public static EnemyType enemyPlayer = EnemyType.Human;
-
     public List<GameObject> StackPlayer1 = new List<GameObject>();
     public List<GameObject> StackPlayer2 = new List<GameObject>();
 
     int numberofTry = 0;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         RemainingTime = gameObject.AddComponent<Timer>();
         RemainingTimeAIMove = gameObject.AddComponent<Timer>();
         
-
-        //StartGame();
-        Debug.Log("StartCalled");
     }
    public void StartGame()
     {
@@ -106,7 +92,7 @@ public class GamePlayHandler : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (GameManager.currentGamestate == GameStates.InGame)
+        if (States.compareState(States.currentGameState, States.Enum.Game_InGame))
         {
             if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
             {
@@ -118,9 +104,9 @@ public class GamePlayHandler : MonoBehaviour
             }
             if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
             {
-                if (enemyPlayer == EnemyType.Computer)
+                if (GameManager.enemyPlayer == EnemyType.Computer)
                 {
-                    if (currentPlayer == PlayerName.Player1)
+                    if (GameManager.currentPlayer == PlayerName.Player1)
                     {
                         DropCoin();
                     }
@@ -129,11 +115,11 @@ public class GamePlayHandler : MonoBehaviour
                     DropCoin();
             }
 
-            if (RemainingTime.Finished&& currentPlayer == PlayerName.Player1)
+            if (RemainingTime.Finished&& GameManager.currentPlayer == PlayerName.Player1)
             {
                 RandomHumanMove();
             }
-            if (RemainingTimeAIMove.Finished && currentPlayer == PlayerName.Player2)
+            if (RemainingTimeAIMove.Finished && GameManager.currentPlayer == PlayerName.Player2)
             {
                 ComputerMove();
             }
@@ -204,38 +190,38 @@ public class GamePlayHandler : MonoBehaviour
     public void changeToHumanPlayer()
     {
         numberofTry = 0;
-        RemainingTime.Duration = GameManager.currentPlayer_ThinkTime;
+        RemainingTime.Duration = GameManager.currentPlayer_ThinkTime;  
         RemainingTime.Run();
-        if (currentPlayer.Equals(PlayerName.Player1))
+        if (GameManager.currentPlayer.Equals(PlayerName.Player1))
         {
             StackPlayer1.Remove(currentCoin);
-            currentPlayer = PlayerName.Player2;
+            GameManager.currentPlayer = PlayerName.Player2;
             Stack1.SetActive(false);
             Stack2.SetActive(true);
         }
-        else if (currentPlayer.Equals(PlayerName.Player2))
+        else if (GameManager.currentPlayer.Equals(PlayerName.Player2))
         {
             StackPlayer2.Remove(currentCoin);
-            currentPlayer = PlayerName.Player1;
+            GameManager.currentPlayer = PlayerName.Player1;
             Stack2.SetActive(false);
             Stack1.SetActive(true);
 
         }
         FindObjectOfType<HUD>().ShowPlayerInfo();
 
-        if (currentPlayer == PlayerName.Player1)
+        if (GameManager.currentPlayer == PlayerName.Player1)
         {
             currentCoin = StackPlayer1[0];
             currentCoin.transform.position = GameGrid.entryslots[0].WorldPosition_Center;
             currentCollum = 0;
         }
-        else if (currentPlayer == PlayerName.Player2)
+        else if (GameManager.currentPlayer == PlayerName.Player2)
         {
             currentCoin = StackPlayer2[0];
             currentCoin.transform.position = GameGrid.entryslots[GameGrid.entryslots.Length - 1].WorldPosition_Center;
             currentCollum = GameGrid.entryslots.Length - 1;
         }
-        if (currentPlayer == PlayerName.Player2 && enemyPlayer == EnemyType.Computer)
+        if (GameManager.currentPlayer == PlayerName.Player2 && GameManager.enemyPlayer == EnemyType.Computer)
         {
             ChangeToComputerPlayer();
         }
@@ -258,13 +244,15 @@ public class GamePlayHandler : MonoBehaviour
         {
             for (int y = 0; y < GameGrid.Height; y++)
             {
-                bool won = (GameGrid.collectNeigbours(GameGrid.getGridElement(x, y),currentPlayer));
+                bool won = (GameGrid.collectNeigbours(GameGrid.getGridElement(x, y), GameManager.currentPlayer));
                 if (won)
                 {
-                    Debug.Log("Win" + currentPlayer);
+                    Debug.Log("Win" + GameManager.currentPlayer);
                     //GameElementsContainer.SetActive(false);
                     FindObjectOfType<HUD>().ShowEndGameMenu();
-                    GameManager.SwitchStateTo(GameStates.GameEnd);
+                    States.SetGameState(States.Enum.Game_End);
+                    FindObjectOfType<HUD>().ShowPlayerWin();
+                    // TODO Call Event 
                     break;
 
                 }

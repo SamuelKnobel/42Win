@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public enum GameStates 
+public enum InGameStates 
 {
     LoadMenu,
     InMainMenu,

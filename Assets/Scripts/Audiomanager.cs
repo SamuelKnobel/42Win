@@ -29,10 +29,7 @@ public class Audiomanager : MonoBehaviour
     void Awake()
     {
         if (audiomanager == null)
-        {
-            DontDestroyOnLoad(this);
             audiomanager = this;
-        }
         else
             Destroy(this);
     }
