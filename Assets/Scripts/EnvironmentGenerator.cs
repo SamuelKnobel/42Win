@@ -8,6 +8,7 @@ public class EnvironmentGenerator : MonoBehaviour
     GameObject GroundElement;
     GameObject BinElement;
 
+    [SerializeField]
     GameObject EnvironmentContainer;
 
 
@@ -27,7 +28,7 @@ public class EnvironmentGenerator : MonoBehaviour
 
     public void BuildEnvironemt()
     {
-        EnvironmentContainer = GameObject.Find("Environment");
+        //EnvironmentContainer = GameObject.Find("Environment");
 
         GroundElement = (GameObject)Resources.Load("Prefabs/Environment/GroundElement");
         WallElement = (GameObject)Resources.Load("Prefabs/Environment/WallElement");

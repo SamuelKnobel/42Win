@@ -23,6 +23,14 @@ public class HUD : MonoBehaviour
     GameObject PauseMenuContainer; 
     [SerializeField]
     GameObject EndGameMenuContainer;
+    [SerializeField]
+    GameObject MenuCanvas;
+    [SerializeField]
+    GameObject GameCanvas;   
+    [SerializeField]
+    GameObject Environment;
+
+
 
     [SerializeField]    Toggle T_Ki;   
     [SerializeField]    Toggle T_Human;
@@ -50,8 +58,7 @@ public class HUD : MonoBehaviour
 
     [SerializeField]
     Button[] allButtons;
-    [SerializeField] bool ButtonsUIDefined;
-    [SerializeField] bool ButtonsGameDefined;
+
 
     private void OnEnable()
     {
@@ -67,33 +74,17 @@ public class HUD : MonoBehaviour
     void MenuLoadingComplete()
     {
         States.SetMenuState(States.Enum.Menu_InMenu);
-        States.SetGamePlayState(States.Enum.MultiPlayer);
     }
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name == "Menu")
-        {
-            Button[] buttons = FindObjectsOfType<Button>();
-            foreach (Button b in buttons)
-            {
-                b.onClick.RemoveAllListeners();
-            }
-            AllocateUIElementsInMenu();
-            EventManager.CallMenuLoadingCompleteEvent();
-        }
-        if (scene.name == "GamePlay")
-        {
-            Button[] buttons = FindObjectsOfType<Button>();
-            foreach (Button b in buttons)
-            {
-                b.onClick.RemoveAllListeners();
-            }       
-            AllocateUIElementsInGame();
-            States.ResetState(States.currentMenuState);
-            States.SetGameState(States.Enum.Game_InGame);
-            FindObjectOfType<GamePlayHandler>().StartGame();
-            // TODO EVENT CALL
-        }
+        States.SetGamePlayState(States.Enum.MultiPlayer);
+        allocateButtonsFunctions();
+        AllocateUIElementsInMenu();
+        AllocateUIElementsInGame();
+        GameCanvas.SetActive(false);
+        Environment.SetActive(false);
+
+        EventManager.CallMenuLoadingCompleteEvent();
     }
 
 
@@ -149,9 +140,7 @@ public class HUD : MonoBehaviour
             EndGameMenuContainer = GameObject.FindGameObjectWithTag("EndGameMenuContainer");
         if (EndGameMenuContainer != null)
             EndGameMenuContainer.SetActive(false);
-
-            FindButtonByName("TakeMoveBack").gameObject.SetActive(b_showMoveBackButton);
-
+        FindButtonByName("TakeMoveBack").gameObject.SetActive(false);
     }
 
     // Update is called once per frame
@@ -214,14 +203,19 @@ public class HUD : MonoBehaviour
     {
         Audiomanager.PlaySound(Audiomanager.Sounds.Button);
         string currentname = EventSystem.current.currentSelectedGameObject.name;
-
-    
-
+        print(currentname);
         switch (currentname.ToLower())
         {
             case "start":
-                SceneManager.LoadScene("GamePlay");
                 States.SetGameState(States.Enum.Game_Loading);
+                Environment.SetActive(true);
+                States.ResetState(States.currentMenuState);
+                States.SetGameState(States.Enum.Game_InGame);
+                MenuCanvas.SetActive(false);
+                GameCanvas.SetActive(true);
+
+                FindObjectOfType<GamePlayHandler>().StartGame();
+
                 break;
             case "exit":
                 if (States.compareState(States.currentGameState, States.Enum.Game_InGame) || States.compareState(States.currentMenuState, States.Enum.Menu_InMenu))
@@ -245,7 +239,6 @@ public class HUD : MonoBehaviour
                 break;
             case "help":
                 States.SetMenuState(States.Enum.Menu_Help);
-                print(HelpMenuContainer);
                 HelpMenuContainer.SetActive(true);
                 SettingsContainer.SetActive(false);
                 MainMenuContainer.SetActive(false);
@@ -257,9 +250,14 @@ public class HUD : MonoBehaviour
             case "backtomenu":
                 Time.timeScale = 1;
                 States.SetMenuState(States.Enum.Menu_Loading);
-                SceneManager.LoadScene("Menu");
                 States.ResetState(States.currentGameState);
                 States.ResetState(States.currentTurnState);
+                EndGameMenuContainer.SetActive(false);
+                PauseMenuContainer.SetActive(false);
+                MenuCanvas.SetActive(true);
+                GameCanvas.SetActive(false);
+                Environment.SetActive(false);
+                States.SetMenuState(States.Enum.Menu_InMenu);
                 break;
             case "restart":
                 States.SetGameState(States.Enum.Game_Loading);
@@ -331,7 +329,6 @@ public class HUD : MonoBehaviour
     //TODO:To be allocated if switched into GameScene
     void allocateGameGUIElements()
     {
-        allocateButtonsFunctions();
         AllocateToggels();
         AllocateText();
         AllocateSlider();
@@ -516,7 +513,7 @@ public class HUD : MonoBehaviour
             b_showMoveBackButton = true;
         else
             b_showMoveBackButton = false;
-
+        FindButtonByName("TakeMoveBack").gameObject.SetActive(b_showMoveBackButton);
     }
     void changeWidth(Slider slider)
     {
