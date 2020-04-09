@@ -66,7 +66,6 @@ public class HUD : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
         EventManager.UpdateUIOnTurnEndEvent += UpdateUIOnEndTurn;
         EventManager.GameEndEvent += ShowPlayerWin;
-
     }
     private void OnDisable()
     {
@@ -259,6 +258,13 @@ public class HUD : MonoBehaviour
                 ResetScene();
                 break;   
             case "takemoveback":
+                if (GameManager.playedCoins.Count >0)
+                {
+                    Coin coinToTakeBack = GameManager.playedCoins[GameManager.playedCoins.Count - 1];
+                    FindObjectOfType<GamePlayHandler>().ReturnCoinToStack(coinToTakeBack);
+                    FindObjectOfType<GamePlayHandler>().SetNextTurn();
+                    GameManager.playedCoins.Remove(coinToTakeBack);
+                }
 
                 Debug.Log("one Move back");
                 break;
@@ -328,7 +334,6 @@ public class HUD : MonoBehaviour
         AllocateText();
         AllocateSlider();
         AllocateDropdown();
-
     }
     void allocateButtonsFunctions()
     {
@@ -337,6 +342,7 @@ public class HUD : MonoBehaviour
         {
             b.onClick.AddListener(() => ButtonFunctions());
         }
+
     }
 
     void AllocateToggels()

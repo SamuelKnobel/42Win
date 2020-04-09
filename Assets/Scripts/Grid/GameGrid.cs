@@ -77,6 +77,10 @@ public class GameGrid
             starposition_y = -(float)Height / 2 + 0.5f;
         else
             starposition_y = -(float)Height / 2;
+        if (gridslots != null)
+            gridslots = null;     
+        if (entryslots != null)
+            entryslots = null;
 
         gridslots = new GridSlot[Width, Height];
         entryslots = new GridSlot[Width];
@@ -167,6 +171,8 @@ public class GameGrid
                 gridslots[x, i].FillingCoin = Coin;
                 Coin.tag = "Untagged";
                 positioned = true;
+                Coin.placed = true;
+                Coin.GridSlotPosition = new Vector2(x, i);
                 break;
             }
         }
@@ -177,7 +183,12 @@ public class GameGrid
         }
 
         return positioned;
-     }
+    }
+
+    public void RemoveCoin(Coin coin)
+    {
+        gridslots[(int)coin.GridSlotPosition.x, (int)coin.GridSlotPosition.y].FillingCoin = null;
+    }
 
 
     public bool collectNeigbours(GridSlot gridSlot, Player player)

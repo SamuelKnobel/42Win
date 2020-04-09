@@ -29,6 +29,7 @@ public class GamePlayHandler : MonoBehaviour
     }
    public void StartGame()
     {
+        GameManager.playedCoins.Clear();
         RemainingTime.ForceTimerReset(GameManager.currentPlayer_ThinkTime);
         foreach (Transform child in Stack1.transform)
             Destroy(child.gameObject);
@@ -84,10 +85,14 @@ public class GamePlayHandler : MonoBehaviour
 
     }
 
-    void SetNextTurn()
+    public void SetNextTurn()
     {
-        currentCoin.transform.SetParent(FieldContainer.transform);
-        GameManager.currentPlayer.CoinStack.Remove(currentCoin);
+        if (currentCoin != null)
+        {
+            currentCoin.transform.SetParent(FieldContainer.transform);
+            GameManager.currentPlayer.CoinStack.Remove(currentCoin);
+            GameManager.playedCoins.Add(currentCoin.GetComponent<Coin>());
+        }
         currentCoin = null;
 
         Player nextPlayer = null;
@@ -135,30 +140,46 @@ public class GamePlayHandler : MonoBehaviour
 
         EventManager.CallUpdateUIOnTurnEndEvent();
     }
+    public void ReturnCoinToStack(Coin coin)
+    {
+        currentCoin.transform.position = Vector3.zero;
+        currentCoin = null;
 
+        coin.Owner.CoinStack.Add(coin.gameObject);
+        GameGrid.RemoveCoin(coin);
+        if (coin.Owner.playingOrder == 0)
+        {
+            coin.gameObject.transform.SetParent(Stack1.transform,false);
+        }
+        else
+        {
+            coin.gameObject.transform.SetParent(Stack2.transform,false);
+        }
+        // remove from grid
+    }
 
     void GeneratePlayerCoinStacks()
     {
         GameManager.Players[0].CoinStack.Clear();
         GameManager.Players[1].CoinStack.Clear();
+        Stack1.transform.position = new Vector3(GameGrid.startPosition.x - 1, GameGrid.startPosition.y, 0);
+        Stack2.transform.position = new Vector3(-GameGrid.startPosition.x + 1, GameGrid.startPosition.y, 0);
 
         for (int i = 0; i < GameGrid.NbOfCells/2; i++)
         {
             GameObject NewCoinP1 = Instantiate(CoinPrefab);
-            NewCoinP1.transform.position = new Vector3(GameGrid.startPosition.x - 1, GameGrid.startPosition.y, 0);
             NewCoinP1.tag = "Coin";
             NewCoinP1.GetComponent<SpriteRenderer>().sprite = GameManager.Players[0].playerSprite;
-            NewCoinP1.transform.SetParent(Stack1.transform);
+            NewCoinP1.transform.SetParent(Stack1.transform,false);
             NewCoinP1.GetComponent<Coin>().Owner = GameManager.Players[0];
 
             //StackPlayer1.Add(NewCoinP1);
             GameManager.Players[0].CoinStack.Add(NewCoinP1);
 
             GameObject NewCoinP2 = Instantiate(CoinPrefab);
-            NewCoinP2.transform.position = new Vector3(-GameGrid.startPosition.x + 1, GameGrid.startPosition.y, 0);
             NewCoinP2.tag = "Coin";
             NewCoinP2.GetComponent<SpriteRenderer>().sprite = GameManager.Players[1].playerSprite;
-            NewCoinP2.transform.SetParent(Stack2.transform);
+            NewCoinP2.transform.SetParent(Stack2.transform,false);
             NewCoinP2.GetComponent<Coin>().Owner = GameManager.Players[1];
             //StackPlayer2.Add(NewCoinP2);
             GameManager.Players[1].CoinStack.Add(NewCoinP2);

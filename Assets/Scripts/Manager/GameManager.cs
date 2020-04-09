@@ -23,14 +23,14 @@ public class GameManager : MonoBehaviour
 
     public static States State;
 
+    public static List<Coin> playedCoins = new List<Coin>();
 
     public string InfoText1 = "empty";
     public string InfoText2 = "empty";
     public string InfoText3 = "empty";
     public string InfoText4 = "empty";
     public string InfoText5 = "empty";
-    [TextArea(10, 11)] public string InfoText6 = "empty";
-
+    [TextArea(5, 6)] public string InfoText6 = "empty";
 
 
     private void Awake()
@@ -63,7 +63,7 @@ public class GameManager : MonoBehaviour
         InfoText3 = "TurnState: " + States.currentTurnState;     
         InfoText4 = "GamePlayState: " + States.currentGamePlayState;
 
-        InfoText5 = "DictLenght:" + States.Dict_States.Count;
+        InfoText5 = "played Coins:" + playedCoins.Count;
 
         if (States.compareState(States.currentGameState,States.Enum.Game_InGame))
         {
