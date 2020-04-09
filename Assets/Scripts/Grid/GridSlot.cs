@@ -39,18 +39,17 @@ public class GridSlot
                 return true;
         }
     }
-
-
-    public PlayerName owner
+   
+    public Player Owner
     {
         get
         {
             if (!isFilled)
             {
-                return PlayerName.Empty;
+                return null;
             }
             else
-                return FillingCoin.owner;
+                return FillingCoin.Owner;
 
         }
     }

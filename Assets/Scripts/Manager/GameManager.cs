@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,33 +11,30 @@ public class GameManager : MonoBehaviour
 
     public static GameManager gameManager;
 
-    public static InGameStates currentGamestate;
-    public static float currentAI_ThinkTime;
+    public static float currentAI_ThinkTime;    
     public static int currentAI_ThinkDepth;
     public static float currentPlayer_ThinkTime;
-    public static Sprite SpritePlayer1;
-    public static Sprite SpritePlayer2;
 
 
-    public static PlayerName currentPlayer = PlayerName.Player2;
-    public static EnemyType enemyPlayer = EnemyType.Human;
+    public static Player[] Players = new Player[2];
+    public static Player currentPlayer;
+
+    public static PlayerName currPlayer = PlayerName.Player2;
 
     public static States State;
 
 
-    [SerializeField]
-    InGameStates state;
     public string InfoText1 = "empty";
     public string InfoText2 = "empty";
     public string InfoText3 = "empty";
     public string InfoText4 = "empty";
     public string InfoText5 = "empty";
+    [TextArea(10, 11)] public string InfoText6 = "empty";
 
 
 
     private void Awake()
     {
-        //SwitchStateTo(InGameStates.LoadMenu);
         if (gameManager == null)
         {
             DontDestroyOnLoad(this);
@@ -44,6 +42,9 @@ public class GameManager : MonoBehaviour
         }
         else
             Destroy(this);
+        Players[0] = new Player("Human1", Player.PlayerType.Human, 0);
+        Players[1] = new Player("Human2", Player.PlayerType.Human, 1);
+        
     }
 
 
@@ -56,54 +57,20 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-            InfoText1 = "MenuState: " + States.currentMenuState;
+        InfoText1 = "MenuState: " + States.currentMenuState;
 
-        //if (States.currentGameState != null)
-            InfoText2 = "GameState: " + States.currentGameState;
-        //if (States.currentTurnState != null)
-            InfoText3 = "TurnState: " + States.currentTurnState;     
-        //if (States.currentGamePlayState != null)
-            InfoText4 = "GamePlayState: " + States.currentGamePlayState;
+        InfoText2 = "GameState: " + States.currentGameState;
+        InfoText3 = "TurnState: " + States.currentTurnState;     
+        InfoText4 = "GamePlayState: " + States.currentGamePlayState;
 
         InfoText5 = "DictLenght:" + States.Dict_States.Count;
 
-        state = currentGamestate;
-    }
-    public static void SwitchStateTo(InGameStates states)
-    {
-        switch (states) 
+        if (States.compareState(States.currentGameState,States.Enum.Game_InGame))
         {
-            case InGameStates.LoadMenu:
-                currentGamestate = InGameStates.LoadMenu;
-                break;
-
-            case InGameStates.InMainMenu:
-                currentGamestate = InGameStates.InMainMenu;
-                //FindObjectOfType<HUD>().AllocateUIElementsInMenu();
-                break;
-            case InGameStates.InSettings:
-                currentGamestate = InGameStates.InSettings;
-                break;
-            case InGameStates.InHelp:
-                currentGamestate = InGameStates.InHelp;
-                break;
-            case InGameStates.LoadGame:
-                currentGamestate = InGameStates.LoadGame;
-
-                break;
-            case InGameStates.InGame:
-                //FindObjectOfType<HUD>().AllocateUIElementsInGame();
-                currentGamestate = InGameStates.InGame;
-               
-                break;
-
-            case InGameStates.GameEnd:
-                currentGamestate = InGameStates.GameEnd;
-               
-
-                break;
-            default:
-                break;
+            InfoText6 = "Players: " + '\n' +
+            Players[0].playerName + '\n' + Players[1].playerName + '\n' +
+            "current Player: " + currentPlayer.playerName;
         }
+ 
     }
 }

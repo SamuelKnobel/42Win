@@ -5,30 +5,19 @@ using UnityEngine;
 public class GamePlayHandler : MonoBehaviour
 {
     GameGrid GameGrid;
-    [SerializeField]
-    GameObject CoinPrefab;  
+    [SerializeField]    GameObject CoinPrefab;  
 
-    [SerializeField]
-    GameObject currentCoin;
+    [SerializeField]    GameObject currentCoin;
 
-    [SerializeField]
-    GameObject Stack1;   
-    [SerializeField]
-    GameObject Stack2;
-    [SerializeField]
-    GameObject FieldContainer;
+    [SerializeField]    GameObject Stack1;   
+    [SerializeField]    GameObject Stack2;
+    [SerializeField]    GameObject FieldContainer;
 
-    [SerializeField]
-    GameObject GameElementsContainer;
+    [SerializeField]    GameObject GameElementsContainer;
 
-    [SerializeField]
-    int currentCollum;
+    [SerializeField]    int currentCollum;
 
     public Timer RemainingTime;
-    public Timer RemainingTimeAIMove;
-
-    public List<GameObject> StackPlayer1 = new List<GameObject>();
-    public List<GameObject> StackPlayer2 = new List<GameObject>();
 
     int numberofTry = 0;
 
@@ -36,23 +25,17 @@ public class GamePlayHandler : MonoBehaviour
     void Awake()
     {
         RemainingTime = gameObject.AddComponent<Timer>();
-        RemainingTimeAIMove = gameObject.AddComponent<Timer>();
-        
+        RemainingTime.Duration = GameManager.currentPlayer_ThinkTime;
     }
    public void StartGame()
     {
+        RemainingTime.ForceTimerReset(GameManager.currentPlayer_ThinkTime);
         foreach (Transform child in Stack1.transform)
-        {
             Destroy(child.gameObject);
-        }
         foreach (Transform child in Stack2.transform)
-        {
             Destroy(child.gameObject);
-        }
         foreach (Transform child in FieldContainer.transform)
-        {
             Destroy(child.gameObject);
-        }
         if (GameGrid != null)
         {
             GameGrid.AllEntrySlots = null;
@@ -60,71 +43,161 @@ public class GamePlayHandler : MonoBehaviour
         }
         GameGrid = new GameGrid();
         GeneratePlayerCoinStacks();
-        changeToHumanPlayer();
+
+        if (States.compareState(States.currentGamePlayState, States.Enum.MultiPlayer))
+        {
+            GameManager.Players[0].playerType = Player.PlayerType.Human;
+            GameManager.Players[1].playerType = Player.PlayerType.Human;
+            GameManager.Players[1].playerName = "Human2";
+
+        }
+        else if(States.compareState(States.currentGamePlayState, States.Enum.SinglePlayer))
+        {
+            GameManager.Players[0].playerType = Player.PlayerType.Human;
+            GameManager.Players[1].playerType = Player.PlayerType.Computer;
+            GameManager.Players[1].playerName = "Computer";
+        }
+        GameManager.currentPlayer = GameManager.Players[0];
+
+        if (GameManager.currentPlayer.playerType == Player.PlayerType.Human)
+            States.SetTurnState(States.Enum.HumanPlayer1Turn);
+        else if (GameManager.currentPlayer.playerType == Player.PlayerType.Computer)
+            States.SetTurnState(States.Enum.ComputerPlayerTurn);
+
+        currentCoin = GameManager.currentPlayer.CoinStack[0];
+
+        if (GameManager.currentPlayer.playingOrder == 0)
+        {
+            currentCoin.transform.position = GameGrid.entryslots[0].WorldPosition_Center;
+            currentCollum = 0;
+        }
+        else if (GameManager.currentPlayer.playingOrder == 1)
+        {
+            currentCoin.transform.position = GameGrid.entryslots[GameGrid.entryslots.Length - 1].WorldPosition_Center;
+            currentCollum = GameGrid.entryslots.Length - 1;
+        }
+        Stack1.SetActive(true);
+        Stack2.SetActive(false);
+
+        EventManager.CallUpdateUIOnTurnEndEvent();
+        States.SetGameState(States.Enum.Game_InGame);
+
     }
+
+    void SetNextTurn()
+    {
+        currentCoin.transform.SetParent(FieldContainer.transform);
+        GameManager.currentPlayer.CoinStack.Remove(currentCoin);
+        currentCoin = null;
+
+        Player nextPlayer = null;
+        if (GameManager.currentPlayer.playingOrder == 0)
+               nextPlayer = GameManager.Players[1];
+        else
+            nextPlayer = GameManager.Players[0];
+
+        currentCoin = nextPlayer.CoinStack[0];
+
+        Stack1.SetActive(false);
+        Stack2.SetActive(false);
+        numberofTry = 0;
+        if (nextPlayer.playerType == Player.PlayerType.Human)
+        {
+            if (nextPlayer.playingOrder ==0)
+            {
+                States.SetTurnState(States.Enum.HumanPlayer1Turn);
+                Stack1.SetActive(true);
+                currentCoin.transform.position = GameGrid.entryslots[0].WorldPosition_Center;
+                currentCollum = 0;
+            }
+            else
+            {
+                States.SetTurnState(States.Enum.HumanPlayer2Turn);
+                Stack2.SetActive(true);
+                currentCoin.transform.position = GameGrid.entryslots[GameGrid.entryslots.Length - 1].WorldPosition_Center;
+                currentCollum = GameGrid.entryslots.Length - 1;
+            }
+            RemainingTime.ForceTimerReset(GameManager.currentPlayer_ThinkTime);
+        }
+        else
+        {
+            States.SetTurnState(States.Enum.ComputerPlayerTurn);
+            Stack2.SetActive(true);
+            currentCoin.transform.position = GameGrid.entryslots[GameGrid.entryslots.Length - 1].WorldPosition_Center;
+            currentCollum = GameGrid.entryslots.Length - 1;
+            RemainingTime.ForceTimerReset(2);
+            RemainingTime.ForceTimerReset(3);
+        }
+
+        //GameManager.currentPlayer.CoinStack.Remove(currentCoin);
+
+        GameManager.currentPlayer = nextPlayer;
+
+        EventManager.CallUpdateUIOnTurnEndEvent();
+    }
+
 
     void GeneratePlayerCoinStacks()
     {
-        StackPlayer1.Clear();
-        StackPlayer2.Clear();
+        GameManager.Players[0].CoinStack.Clear();
+        GameManager.Players[1].CoinStack.Clear();
 
         for (int i = 0; i < GameGrid.NbOfCells/2; i++)
         {
             GameObject NewCoinP1 = Instantiate(CoinPrefab);
             NewCoinP1.transform.position = new Vector3(GameGrid.startPosition.x - 1, GameGrid.startPosition.y, 0);
             NewCoinP1.tag = "Coin";
-            NewCoinP1.GetComponent<SpriteRenderer>().sprite = GameManager.SpritePlayer1;
+            NewCoinP1.GetComponent<SpriteRenderer>().sprite = GameManager.Players[0].playerSprite;
             NewCoinP1.transform.SetParent(Stack1.transform);
-            NewCoinP1.GetComponent<Coin>().owner = PlayerName.Player1;
-            StackPlayer1.Add(NewCoinP1);
+            NewCoinP1.GetComponent<Coin>().Owner = GameManager.Players[0];
 
-            GameObject newCoinP2 = Instantiate(CoinPrefab);
-            newCoinP2.transform.position = new Vector3(-GameGrid.startPosition.x + 1, GameGrid.startPosition.y, 0);
-            newCoinP2.tag = "Coin";
-            newCoinP2.GetComponent<SpriteRenderer>().sprite = GameManager.SpritePlayer2;
-            newCoinP2.transform.SetParent(Stack2.transform);
-            newCoinP2.GetComponent<Coin>().owner = PlayerName.Player2;
-            StackPlayer2.Add(newCoinP2);
+            //StackPlayer1.Add(NewCoinP1);
+            GameManager.Players[0].CoinStack.Add(NewCoinP1);
+
+            GameObject NewCoinP2 = Instantiate(CoinPrefab);
+            NewCoinP2.transform.position = new Vector3(-GameGrid.startPosition.x + 1, GameGrid.startPosition.y, 0);
+            NewCoinP2.tag = "Coin";
+            NewCoinP2.GetComponent<SpriteRenderer>().sprite = GameManager.Players[1].playerSprite;
+            NewCoinP2.transform.SetParent(Stack2.transform);
+            NewCoinP2.GetComponent<Coin>().Owner = GameManager.Players[1];
+            //StackPlayer2.Add(NewCoinP2);
+            GameManager.Players[1].CoinStack.Add(NewCoinP2);
 
         }
     }
+
 
     // Update is called once per frame
     void Update()
     {
         if (States.compareState(States.currentGameState, States.Enum.Game_InGame))
         {
-            if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+            if (GameManager.currentPlayer.playerType == Player.PlayerType.Human)
             {
-                MoveCoinLeft();
-            }
-            if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                MoveCoinRight();
-            }
-            if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
-            {
-                if (GameManager.enemyPlayer == EnemyType.Computer)
+                if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
                 {
-                    if (GameManager.currentPlayer == PlayerName.Player1)
-                    {
-                        DropCoin();
-                    }
+                    MoveCoinLeft();
                 }
-                else
+                if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+                {
+                    MoveCoinRight();
+                }
+                if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+                {
                     DropCoin();
+                }
             }
+            
 
-            if (RemainingTime.Finished&& GameManager.currentPlayer == PlayerName.Player1)
+            if (RemainingTime.Finished&& GameManager.currentPlayer.playerType == Player.PlayerType.Human)
             {
                 RandomHumanMove();
             }
-            if (RemainingTimeAIMove.Finished && GameManager.currentPlayer == PlayerName.Player2)
+            if (RemainingTime.Finished && GameManager.currentPlayer.playerType == Player.PlayerType.Computer)
             {
                 ComputerMove();
             }
         }
-
     }
     private void MoveCoinLeft()
     {
@@ -150,10 +223,12 @@ public class GamePlayHandler : MonoBehaviour
     {
         if (GameGrid.AddCoinAtPosition(currentCollum, currentCoin.GetComponent<Coin>()))
         {
-            currentCoin.transform.SetParent(FieldContainer.transform);
-            CheckIfWin();
-            changeToHumanPlayer();
             Audiomanager.PlaySound(Audiomanager.Sounds.Drop);
+            if (!CheckIfWin())
+            {
+                //changeToHumanPlayer();
+                SetNextTurn();
+            }
         }
     }
 
@@ -162,9 +237,10 @@ public class GamePlayHandler : MonoBehaviour
     {
         if (GameGrid.AddCoinAtPosition(Random.Range(0, GameGrid.entryslots.Length), currentCoin.GetComponent<Coin>()))
         {
-            currentCoin.transform.SetParent(FieldContainer.transform);
-            CheckIfWin();
-            changeToHumanPlayer();
+            if (!CheckIfWin())
+            {
+                SetNextTurn();
+            }
         }
         else if (numberofTry<10)
         {
@@ -176,9 +252,10 @@ public class GamePlayHandler : MonoBehaviour
     {
         if (GameGrid.AddCoinAtPosition(Random.Range(0, GameGrid.entryslots.Length), currentCoin.GetComponent<Coin>()))
         {
-            currentCoin.transform.SetParent(FieldContainer.transform);
-            CheckIfWin();
-            changeToHumanPlayer();
+            if (!CheckIfWin())
+            {
+                SetNextTurn();
+            }
         }
         else if (numberofTry < 10)
         {
@@ -186,78 +263,26 @@ public class GamePlayHandler : MonoBehaviour
             ComputerMove();
         }
     }
-        
-    public void changeToHumanPlayer()
-    {
-        numberofTry = 0;
-        RemainingTime.Duration = GameManager.currentPlayer_ThinkTime;  
-        RemainingTime.Run();
-        if (GameManager.currentPlayer.Equals(PlayerName.Player1))
-        {
-            StackPlayer1.Remove(currentCoin);
-            GameManager.currentPlayer = PlayerName.Player2;
-            Stack1.SetActive(false);
-            Stack2.SetActive(true);
-        }
-        else if (GameManager.currentPlayer.Equals(PlayerName.Player2))
-        {
-            StackPlayer2.Remove(currentCoin);
-            GameManager.currentPlayer = PlayerName.Player1;
-            Stack2.SetActive(false);
-            Stack1.SetActive(true);
-
-        }
-        FindObjectOfType<HUD>().ShowPlayerInfo();
-
-        if (GameManager.currentPlayer == PlayerName.Player1)
-        {
-            currentCoin = StackPlayer1[0];
-            currentCoin.transform.position = GameGrid.entryslots[0].WorldPosition_Center;
-            currentCollum = 0;
-        }
-        else if (GameManager.currentPlayer == PlayerName.Player2)
-        {
-            currentCoin = StackPlayer2[0];
-            currentCoin.transform.position = GameGrid.entryslots[GameGrid.entryslots.Length - 1].WorldPosition_Center;
-            currentCollum = GameGrid.entryslots.Length - 1;
-        }
-        if (GameManager.currentPlayer == PlayerName.Player2 && GameManager.enemyPlayer == EnemyType.Computer)
-        {
-            ChangeToComputerPlayer();
-        }
-    }
-
-    public void ChangeToComputerPlayer()
-    {
-        numberofTry = 0;
-        RemainingTimeAIMove.Duration = 2;
-        RemainingTimeAIMove.Run();
-        RemainingTime.Duration = 3.01f;
-        RemainingTime.Run();
-
-    }
 
     // TODO: more efficient if ony the new Coin is checked
-    public void CheckIfWin()
+    public bool CheckIfWin()
     {
+        bool won = false;
         for (int x = 0; x < GameGrid.Width ; x++)
         {
             for (int y = 0; y < GameGrid.Height; y++)
             {
-                bool won = (GameGrid.collectNeigbours(GameGrid.getGridElement(x, y), GameManager.currentPlayer));
+                 won = (GameGrid.collectNeigbours(GameGrid.getGridElement(x, y), GameManager.currentPlayer));
                 if (won)
                 {
-                    Debug.Log("Win" + GameManager.currentPlayer);
                     //GameElementsContainer.SetActive(false);
-                    FindObjectOfType<HUD>().ShowEndGameMenu();
                     States.SetGameState(States.Enum.Game_End);
-                    FindObjectOfType<HUD>().ShowPlayerWin();
-                    // TODO Call Event 
-                    break;
-
+                    EventManager.CallGameEndEvent();
+                    return won;
                 }
             }
         }
+        return won;
     }
 
 

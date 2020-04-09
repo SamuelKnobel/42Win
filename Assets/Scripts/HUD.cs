@@ -64,11 +64,17 @@ public class HUD : MonoBehaviour
     {
         EventManager.MenuLoadingCompleteEvent += MenuLoadingComplete;
         SceneManager.sceneLoaded += OnSceneLoaded;
+        EventManager.UpdateUIOnTurnEndEvent += UpdateUIOnEndTurn;
+        EventManager.GameEndEvent += ShowPlayerWin;
+
     }
     private void OnDisable()
     {
         EventManager.MenuLoadingCompleteEvent -= MenuLoadingComplete;
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        EventManager.UpdateUIOnTurnEndEvent -= UpdateUIOnEndTurn;
+        EventManager.GameEndEvent -= ShowPlayerWin;
+
     }
 
     void MenuLoadingComplete()
@@ -86,27 +92,46 @@ public class HUD : MonoBehaviour
 
         EventManager.CallMenuLoadingCompleteEvent();
     }
+    void UpdateUIOnEndTurn()
+    {
+        if (currentPlayerText != null)
+        {
+            currentPlayerText.text = PreTextPlayerInfo + GameManager.currentPlayer.playerName;
+        }
+    }
 
+    public void ShowPlayerWin()
+    {
+        EndGameMenuContainer.SetActive(true);
+
+        WinText.gameObject.SetActive(true);
+        currentPlayerText.gameObject.SetActive(false);
+        WinText.text = PreTextPlayerWin + GameManager.currentPlayer.playerName;
+
+        if (States.compareState(States.currentGamePlayState, States.Enum.SinglePlayer))
+        {
+            if (GameManager.currentPlayer.playerType == Player.PlayerType.Human)
+                Audiomanager.PlaySound(Audiomanager.Sounds.Win);
+            else
+                Audiomanager.PlaySound(Audiomanager.Sounds.Loose);
+        }
+
+
+    }
 
 
     private void Awake()
     {
         if (CoinSprites.Count > 0)
         {
-            GameManager.SpritePlayer1 = CoinSprites[0];
-            GameManager.SpritePlayer2 = CoinSprites[CoinSprites.Count - 1];
+            GameManager.Players[0].playerSprite =  CoinSprites[0];
+            GameManager.Players[1].playerSprite = CoinSprites[CoinSprites.Count - 1];
         }
         foreach (var item in CoinSprites)
         {
             Dropdown.OptionData newSprite = new Dropdown.OptionData("", item);
             CoinSpriteDD.Add(newSprite);
         }
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-
     }
 
     public void AllocateUIElementsInMenu()
@@ -153,12 +178,7 @@ public class HUD : MonoBehaviour
             {
                 if (TimeText != null)
                 {
-                    if (GameManager.currentPlayer == PlayerName.Player2 && GameManager.enemyPlayer == EnemyType.Computer)
-                    {
-                        TimeText.text = PreTextTime + Mathf.Round(handler.RemainingTimeAIMove.RemainTime);
-                    }
-                    else
-                        TimeText.text = PreTextTime + Mathf.Round(handler.RemainingTime.RemainTime);
+                    TimeText.text = PreTextTime + Mathf.Round(handler.RemainingTime.RemainTime);
                 }
             }
         }
@@ -172,45 +192,18 @@ public class HUD : MonoBehaviour
         }
     }
 
-    // TODO: Solve it with events!
-    public void ShowPlayerInfo()
-    {
-        if (currentPlayerText!= null)
-        {
-            currentPlayerText.text = PreTextPlayerInfo + GameManager.currentPlayer;
-        }
-    }
-
-    public void ShowPlayerWin()
-    {
-        WinText.gameObject.SetActive(true);
-        currentPlayerText.gameObject.SetActive(false);
-        WinText.text = PreTextPlayerWin + GameManager.currentPlayer;
-
-        if (GameManager.currentPlayer == PlayerName.Player1 && GameManager.enemyPlayer == EnemyType.Computer )
-            Audiomanager.PlaySound(Audiomanager.Sounds.Win);
-        else if (GameManager.currentPlayer == PlayerName.Player2 && GameManager.enemyPlayer == EnemyType.Computer)
-            Audiomanager.PlaySound(Audiomanager.Sounds.Loose);
-
-    }
-
-    public void ShowEndGameMenu()
-    {
-        EndGameMenuContainer.SetActive(true);
-    }
-
     public void ButtonFunctions()
     {
         Audiomanager.PlaySound(Audiomanager.Sounds.Button);
         string currentname = EventSystem.current.currentSelectedGameObject.name;
-        print(currentname);
         switch (currentname.ToLower())
         {
             case "start":
                 States.SetGameState(States.Enum.Game_Loading);
                 Environment.SetActive(true);
+                SettingsContainer.SetActive(false);
+                MainMenuContainer.SetActive(true);
                 States.ResetState(States.currentMenuState);
-                States.SetGameState(States.Enum.Game_InGame);
                 MenuCanvas.SetActive(false);
                 GameCanvas.SetActive(true);
 
@@ -249,6 +242,8 @@ public class HUD : MonoBehaviour
                 break;           
             case "backtomenu":
                 Time.timeScale = 1;
+                WinText.gameObject.SetActive(false);
+                currentPlayerText.gameObject.SetActive(true);
                 States.SetMenuState(States.Enum.Menu_Loading);
                 States.ResetState(States.currentGameState);
                 States.ResetState(States.currentTurnState);
@@ -277,10 +272,11 @@ public class HUD : MonoBehaviour
     void ResetScene()
     {
         Time.timeScale = 1;
+        WinText.gameObject.SetActive(false);
+        currentPlayerText.gameObject.SetActive(true);
         EndGameMenuContainer.SetActive(false);
         PauseMenuContainer.SetActive(false);
         currentPlayerText.gameObject.SetActive(true);
-        States.SetGameState(States.Enum.Game_InGame);
         FindObjectOfType<GamePlayHandler>().StartGame();
     }
     public Button FindButtonByName(string buttonName)
@@ -326,7 +322,6 @@ public class HUD : MonoBehaviour
         }
     }
 
-    //TODO:To be allocated if switched into GameScene
     void allocateGameGUIElements()
     {
         AllocateToggels();
@@ -343,7 +338,6 @@ public class HUD : MonoBehaviour
             b.onClick.AddListener(() => ButtonFunctions());
         }
     }
-
 
     void AllocateToggels()
     {
@@ -437,10 +431,11 @@ public class HUD : MonoBehaviour
                 ChooseSpritePlayer1.ClearOptions();
                 ChooseSpritePlayer1.AddOptions(CoinSpriteDD);
 
-                ChooseSpritePlayer1.onValueChanged.AddListener(delegate {
-                    changeSprite(PlayerName.Player1, ChooseSpritePlayer1.value);
-                });
-                int i1 = CoinSprites.FindIndex(x => x == GameManager.SpritePlayer1);
+
+                ChooseSpritePlayer1.onValueChanged.AddListener(delegate{
+                    changeSprite(GameManager.Players[0], ChooseSpritePlayer1.value); });
+
+                int i1 = CoinSprites.FindIndex(x => x == GameManager.Players[0].playerSprite);
                 ChooseSpritePlayer1.value = i1;
             }         
             if (d.name == "DDPlayer2Sprite")
@@ -449,9 +444,9 @@ public class HUD : MonoBehaviour
                 ChooseSpritePlayer2.ClearOptions();
                 ChooseSpritePlayer2.AddOptions(CoinSpriteDD);
                 ChooseSpritePlayer2.onValueChanged.AddListener(delegate {
-                    changeSprite(PlayerName.Player2, ChooseSpritePlayer2.value);
+                    changeSprite(GameManager.Players[1], ChooseSpritePlayer2.value);
                 });
-                int i2 = CoinSprites.FindIndex(x => x == GameManager.SpritePlayer2);
+                int i2 = CoinSprites.FindIndex(x => x == GameManager.Players[1].playerSprite);
                 ChooseSpritePlayer2.value = i2;
             }
         }
@@ -492,21 +487,17 @@ public class HUD : MonoBehaviour
         if (TimeText == null)
             Debug.LogWarning("Time TextField could not be allocated");
     }
-
     void KIvsHumanToggle()
     {
         if (T_Ki.isOn)
         {
             States.SetGamePlayState(States.Enum.SinglePlayer);
-            GameManager.enemyPlayer = EnemyType.Computer;
         }
         else 
         {
-            GameManager.enemyPlayer = EnemyType.Human;
             States.SetGamePlayState(States.Enum.MultiPlayer);
         }
     }
-
     void ShowMoveBackButtonToggle()
     {
         if (T_MoveBack.isOn)
@@ -527,21 +518,10 @@ public class HUD : MonoBehaviour
     {
         ConfigurationUtils.changeSettingValue(ConfigurationDataValueName.Difficulty, (int)slider.value);    
     }
-    void changeSprite(PlayerName playerName, int spriteIndex)
+    void changeSprite(Player player, int spriteIndex)
     {
-        switch (playerName)
-        {
-            case PlayerName.Player1:
-                GameManager.SpritePlayer1 = CoinSprites[spriteIndex];
-                break;
-            case PlayerName.Player2:
-                GameManager.SpritePlayer2 = CoinSprites[spriteIndex];
-                break;
-            case PlayerName.Empty:
-                break;
-            default:
-                break;
-        }
+        player.playerSprite = CoinSprites[spriteIndex];
     }
+  
 
 }

@@ -180,32 +180,31 @@ public class GameGrid
      }
 
 
-    public bool collectNeigbours(GridSlot gridSlot, PlayerName playerName)
+    public bool collectNeigbours(GridSlot gridSlot, Player player)
     {
         bool result = true;
 
-
-        result = checkOwner(gridSlot.getEast(), playerName);
+        result = CheckOwner(gridSlot.getEast(), player);
         if (result)
             return result;
 
-        result = checkOwner(gridSlot.getNorth(), playerName);
+        result = CheckOwner(gridSlot.getNorth(), player);
         if (result)
             return result;
 
-        result = checkOwner(gridSlot.getNorthEast(), playerName);
+        result = CheckOwner(gridSlot.getNorthEast(), player);
         if (result)
             return result;
 
-        result = checkOwner(gridSlot.getNorthWest(), playerName);
+        result = CheckOwner(gridSlot.getNorthWest(), player);
         if (result)
             return result;
-
 
         return result;
     }
 
-    bool checkOwner(List<GridSlot> slots, PlayerName player)
+ 
+    bool CheckOwner(List<GridSlot> slots, Player player)
     {
         bool result = true;
 
@@ -213,11 +212,12 @@ public class GameGrid
         {
             foreach (var item in slots)
             {
-                if (item.owner != player)
+                if (item.Owner != player)
                 {
                     result = false;
                     break;
                 }
+
             }
         }
         else

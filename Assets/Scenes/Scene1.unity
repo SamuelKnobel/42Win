@@ -7822,12 +7822,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 064f775d0b0dd314484901b89ef10213, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  state: 0
   InfoText1: empty
   InfoText2: empty
   InfoText3: empty
   InfoText4: empty
   InfoText5: empty
+  InfoText6: empty
 --- !u!114 &1729000088
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7874,6 +7874,7 @@ MonoBehaviour:
   EndGameMenuContainer: {fileID: 0}
   MenuCanvas: {fileID: 555477381}
   GameCanvas: {fileID: 510773819}
+  Environment: {fileID: 2063549334}
   T_Ki: {fileID: 0}
   T_Human: {fileID: 0}
   T_MoveBack: {fileID: 0}
@@ -7910,6 +7911,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ecbe93274dc4034fbfe4956147433c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  EnvironmentContainer: {fileID: 2063549334}
 --- !u!114 &1729000092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8742,8 +8744,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -623.30005, y: 56.2}
-  m_SizeDelta: {x: 631, y: 567}
+  m_AnchoredPosition: {x: -591, y: 56.2}
+  m_SizeDelta: {x: 566.3, y: 567}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1850853055
 MonoBehaviour:

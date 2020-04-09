@@ -9,6 +9,8 @@ public static class EventManager
     public delegate void EventAction();
 
     public static event EventAction MenuLoadingCompleteEvent;
+    public static event EventAction UpdateUIOnTurnEndEvent;
+    public static event EventAction GameEndEvent;
 
     public static void CallMenuLoadingCompleteEvent()
     {
@@ -18,6 +20,24 @@ public static class EventManager
         }
         else
             Debug.LogWarning("No Listener for CallMenuLoadingCompleteEvent");
+    }
+    public static void CallUpdateUIOnTurnEndEvent()
+    {
+        if (UpdateUIOnTurnEndEvent != null)
+        {
+            UpdateUIOnTurnEndEvent.Invoke();
+        }
+        else
+            Debug.LogWarning("No Listener for CallUpdateUIOnTurnEndEvent");
+    }
+    public static void CallGameEndEvent()
+    {
+        if (GameEndEvent != null)
+        {
+            GameEndEvent.Invoke();
+        }
+        else
+            Debug.LogWarning("No Listener for CallGameEndEvent");
     }
 
 

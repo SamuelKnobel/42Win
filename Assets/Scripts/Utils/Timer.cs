@@ -52,6 +52,14 @@ public class Timer : MonoBehaviour
             return 0;
         }
     }
+    public void ForceTimerReset(float newDuration)
+    {
+        totalSeconds = 0;
+        elapsedSeconds = 0;
+        running = false;
+        Duration = newDuration;
+        Run();
+    }
 
     /// <summary>
     /// Gets whether or not the timer has finished running

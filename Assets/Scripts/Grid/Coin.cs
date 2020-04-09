@@ -4,8 +4,5 @@ using UnityEngine;
 
 public class Coin : MonoBehaviour
 {
-
-    public PlayerName owner;
-
-
+    public Player Owner;
 }
