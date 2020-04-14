@@ -86,15 +86,15 @@ public class ConfigurationData
         values.Add(ConfigurationDataValueName.Height, 6);
         values.Add(ConfigurationDataValueName.Width, 9);
         values.Add(ConfigurationDataValueName.Difficulty,0);
-        values.Add(ConfigurationDataValueName.AIThinkTimeEasy,0.01f);
-        values.Add(ConfigurationDataValueName.AIThinkTimeMedium,.1f);
-        values.Add(ConfigurationDataValueName.AIThinkTimeHard,1f);
+        values.Add(ConfigurationDataValueName.AIThinkTimeEasy,1f);
+        values.Add(ConfigurationDataValueName.AIThinkTimeMedium,2f);
+        values.Add(ConfigurationDataValueName.AIThinkTimeHard,4);
         values.Add(ConfigurationDataValueName.PlayerThinkTimeEasy,20f);
         values.Add(ConfigurationDataValueName.PlayerThinkTimeMedium,10f);
         values.Add(ConfigurationDataValueName.PlayerThinkTimeHard,5f);
-        values.Add(ConfigurationDataValueName.AIDepthEasy,10f);
-        values.Add(ConfigurationDataValueName.AIDepthMedium,20f);
-        values.Add(ConfigurationDataValueName.AIDepthHard,40f);
+        values.Add(ConfigurationDataValueName.AIDepthEasy,2);
+        values.Add(ConfigurationDataValueName.AIDepthMedium,3);
+        values.Add(ConfigurationDataValueName.AIDepthHard,4);
 
     }
 

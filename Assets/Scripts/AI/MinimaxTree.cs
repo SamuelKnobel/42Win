@@ -12,7 +12,6 @@ public class MinimaxTree<T>
 
     MinimaxTreeNode<T> root = null;
     List<MinimaxTreeNode<T>> nodes = new List<MinimaxTreeNode<T>>();
-
     #endregion
 
     #region Constructor
@@ -21,9 +20,9 @@ public class MinimaxTree<T>
     /// Constructor
     /// </summary>
     /// <param name="value">value of the root node</param>
-    public MinimaxTree(T value)
+    public MinimaxTree(T value,int Order)
     {
-        root = new MinimaxTreeNode<T>(value, null);
+        root = new MinimaxTreeNode<T>(value, null,Order);
         nodes.Add(root);
     }
 

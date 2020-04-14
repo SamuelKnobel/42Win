@@ -22,13 +22,21 @@ public class EnvironmentGenerator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        BuildEnvironemt();
+       
 
     }
 
     public void BuildEnvironemt()
     {
-        //EnvironmentContainer = GameObject.Find("Environment");
+        EnvironmentContainer = GameObject.FindGameObjectWithTag("EnvironmentContainer");
+        foreach (Transform child in EnvironmentContainer.transform)
+        {
+            if (child.gameObject.name == "Stack1"|| child.gameObject.name == "Stack2"|| child.gameObject.name == "FieldContainer")
+            {             
+            }
+            else
+                Destroy(child.gameObject);
+        }
 
         GroundElement = (GameObject)Resources.Load("Prefabs/Environment/GroundElement");
         WallElement = (GameObject)Resources.Load("Prefabs/Environment/WallElement");

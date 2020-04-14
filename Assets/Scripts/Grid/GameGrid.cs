@@ -109,6 +109,19 @@ public class GameGrid
         GenerateGridEntryPoints();
 
     }
+
+    //Configuration configuration;
+    //public Configuration Configuration
+    //{
+    //    get { return configuration; }
+    //    set
+    //    {
+    //        configuration = value;
+    //    }
+    //}
+
+
+
     void GenerateGridSlots()
     {
         for (int x = 0; x < Width; x++)

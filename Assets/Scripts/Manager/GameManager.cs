@@ -15,11 +15,9 @@ public class GameManager : MonoBehaviour
     public static int currentAI_ThinkDepth;
     public static float currentPlayer_ThinkTime;
 
-
+    public static GameGrid GameGrid;
     public static Player[] Players = new Player[2];
     public static Player currentPlayer;
-
-    public static PlayerName currPlayer = PlayerName.Player2;
 
     public static States State;
 
@@ -52,6 +50,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+
     }
 
     // Update is called once per frame
@@ -71,6 +70,20 @@ public class GameManager : MonoBehaviour
             Players[0].playerName + '\n' + Players[1].playerName + '\n' +
             "current Player: " + currentPlayer.playerName;
         }
+
  
+
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            //print(new Configuration(GameGrid).ToString());
+
+            //foreach (Configuration item in currentPlayer.GetNextConfigurations(new Configuration(GameGrid)))
+            //{
+            //    print(item.ToString());
+            //}
+            currentPlayer.TakeTurn();
+        }
+
+
     }
 }

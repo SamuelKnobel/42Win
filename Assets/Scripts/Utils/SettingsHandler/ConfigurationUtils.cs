@@ -47,6 +47,5 @@ public static class ConfigurationUtils
     public static void Initialize()
     {
         ConfigurationData = new ConfigurationData();
-        Debug.Log("Initialized");
     }
 }

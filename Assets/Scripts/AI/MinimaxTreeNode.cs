@@ -14,6 +14,7 @@ public class MinimaxTreeNode<T>
     MinimaxTreeNode<T> parent;
     List<MinimaxTreeNode<T>> children;
     float minimaxScore = 0;
+    public int playerOrder;
 
     #endregion
 
@@ -24,11 +25,12 @@ public class MinimaxTreeNode<T>
     /// </summary>
     /// <param name="value">value for the node</param>
     /// <param name="parent">parent for the node</param>
-    public MinimaxTreeNode(T value, MinimaxTreeNode<T> parent)
+    public MinimaxTreeNode(T value, MinimaxTreeNode<T> parent, int PlayerOrder)
     {
         this.value = value;
         this.parent = parent;
         children = new List<MinimaxTreeNode<T>>();
+        playerOrder = PlayerOrder;
     }
 
     #endregion

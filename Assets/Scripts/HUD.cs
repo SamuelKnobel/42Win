@@ -206,6 +206,7 @@ public class HUD : MonoBehaviour
                 MenuCanvas.SetActive(false);
                 GameCanvas.SetActive(true);
 
+                FindObjectOfType<EnvironmentGenerator>().BuildEnvironemt();
                 FindObjectOfType<GamePlayHandler>().StartGame();
 
                 break;
@@ -261,12 +262,10 @@ public class HUD : MonoBehaviour
                 if (GameManager.playedCoins.Count >0)
                 {
                     Coin coinToTakeBack = GameManager.playedCoins[GameManager.playedCoins.Count - 1];
-                    FindObjectOfType<GamePlayHandler>().ReturnCoinToStack(coinToTakeBack);
-                    FindObjectOfType<GamePlayHandler>().SetNextTurn();
                     GameManager.playedCoins.Remove(coinToTakeBack);
+                    FindObjectOfType<GamePlayHandler>().ReturnCoinToStack(coinToTakeBack);
                 }
 
-                Debug.Log("one Move back");
                 break;
 
             default:
@@ -405,7 +404,7 @@ public class HUD : MonoBehaviour
             if (s.name == "Difficulty")
             {
                 S_Difficulty = s;
-                S_Difficulty.onValueChanged.AddListener(delegate { changeDiff(S_Difficulty); });
+                S_Difficulty.onValueChanged.AddListener(delegate {changeDiff(S_Difficulty); });
                 S_Difficulty.value = 0;
             }
             if (S_Width != null && S_Height != null && S_Difficulty != null)
