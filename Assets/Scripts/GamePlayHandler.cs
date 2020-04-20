@@ -72,12 +72,12 @@ public class GamePlayHandler : MonoBehaviour
 
         currentCoin = GameManager.currentPlayer.CoinStack[0];
 
-        if (GameManager.currentPlayer.playingOrder == 0)
+        if (GameManager.currentPlayer.PlayerIndex == 0)
         {
             currentCoin.transform.position = GameManager.GameGrid.entryslots[0].WorldPosition_Center;
             currentCollum = 0;
         }
-        else if (GameManager.currentPlayer.playingOrder == 1)
+        else if (GameManager.currentPlayer.PlayerIndex == 1)
         {
             currentCoin.transform.position = GameManager.GameGrid.entryslots[GameManager.GameGrid.entryslots.Length - 1].WorldPosition_Center;
             currentCollum = GameManager.GameGrid.entryslots.Length - 1;
@@ -101,7 +101,7 @@ public class GamePlayHandler : MonoBehaviour
         currentCoin = null;
 
         Player nextPlayer = null;
-        if (GameManager.currentPlayer.playingOrder == 0)
+        if (GameManager.currentPlayer.PlayerIndex == 0)
                nextPlayer = GameManager.Players[1];
         else
             nextPlayer = GameManager.Players[0];
@@ -113,7 +113,7 @@ public class GamePlayHandler : MonoBehaviour
         numberofTry = 0;
         if (nextPlayer.playerType == Player.PlayerType.Human)
         {
-            if (nextPlayer.playingOrder ==0)
+            if (nextPlayer.PlayerIndex ==0)
             {
                 States.SetTurnState(States.Enum.HumanPlayer1Turn);
                 Stack1.SetActive(true);
@@ -136,7 +136,7 @@ public class GamePlayHandler : MonoBehaviour
             currentCoin.transform.position = GameManager.GameGrid.entryslots[GameManager.GameGrid.entryslots.Length - 1].WorldPosition_Center;
             currentCollum = GameManager.GameGrid.entryslots.Length - 1;
             RemainingTime.ForceTimerReset(GameManager.currentAI_ThinkTime);
-            NextMoveCol = nextPlayer.TakeTurn();
+            NextMoveCol = nextPlayer.GetNextMove();
         }
 
         GameManager.currentPlayer = nextPlayer;
@@ -150,7 +150,7 @@ public class GamePlayHandler : MonoBehaviour
 
         coin.Owner.CoinStack.Add(coin.gameObject);
         GameManager.GameGrid.RemoveCoin(coin);
-        if (coin.Owner.playingOrder == 0)
+        if (coin.Owner.PlayerIndex == 0)
         {
             coin.gameObject.transform.SetParent(Stack1.transform,false);
             coin.gameObject.transform.localPosition = Vector3.zero;
@@ -211,6 +211,7 @@ public class GamePlayHandler : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
                 {
                     DropCoin();
+
                 }
             }
             
@@ -251,6 +252,10 @@ public class GamePlayHandler : MonoBehaviour
     {
         if (GameManager.GameGrid.AddCoinAtPosition(currentCollum, currentCoin.GetComponent<Coin>()))
         {
+            if (GameManager.FirstMove)
+            {
+                GameManager.FirstMove = false;
+            }
             Audiomanager.PlaySound(Audiomanager.Sounds.Drop);
             if (!CheckIfWin())
             {

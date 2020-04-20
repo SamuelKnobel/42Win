@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
 using UnityEngine;
 
 public class Player 
@@ -14,13 +15,13 @@ public class Player
 
     public PlayerType playerType;
     public bool isPlaying;
-    public int playingOrder;
+    public int PlayerIndex;
 
     public Sprite playerSprite;
 
     public List<GameObject> CoinStack = new List<GameObject>();
 
-    MinimaxTree<Configuration> tree;
+    public MinimaxTree<Configuration> tree;
 
     List<Configuration> newConfigurations =
     new List<Configuration>();
@@ -34,14 +35,28 @@ public class Player
     {
         playerName = name;
         playerType = type;
-        playingOrder = order;
+        PlayerIndex = order;
     }
-
-    public int TakeTurn()
+    public void TreeBuilder(int currentPlayerInd)
     {
-        tree = BuildTree(new Configuration(GameManager.GameGrid), playingOrder);
-        Minimax(tree.Root, false);
-        //Debug.Log(tree.ToString());
+        //tree = StartBuildTree(new Configuration(GameManager.GameGrid), playingOrder);
+
+        //Debug.Log("start.");
+        ////EventManager.CallThreadEvent(2);
+        //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+        //sw.Start();
+        
+        Configuration StartConfig = new Configuration(GameManager.GameGrid, currentPlayerInd);
+        StartBuildTree(StartConfig);
+        //sw.Stop();
+        //Debug.Log("Three Build : Done! Elapsed time: " + sw.ElapsedMilliseconds / 1000f);
+    }
+    public int GetNextMove()
+    {
+        Debug.Log("Start MINMAX");
+        //StartBuildTree(new Configuration(GameManager.GameGrid), playingOrder);
+        Minimax(tree.Root, true);
+        Debug.Log(tree.ToString());
         //find child node with maximum score
         IList<MinimaxTreeNode<Configuration>> children =
             tree.Root.Children;
@@ -54,91 +69,154 @@ public class Player
                 maxChildNode = children[i];
             }
         }
-        //Debug.Log(maxChildNode.Value.ToString());
-        //Debug.Log(maxChildNode.Value.lastMove);
-        if (maxChildNode.MinimaxScore == 0.5)
+
+        Debug.Log(maxChildNode.Value.ToString());
+        Debug.Log(maxChildNode.Value.lastMove);
+        Debug.Log(maxChildNode.Value.WinningPlayer);
+        if (maxChildNode.MinimaxScore == 0)
         {
             Debug.Log("R");
-            return UnityEngine.Random.Range(0, GameManager.GameGrid.entryslots.Length);
+            return -1;// UnityEngine.Random.Range(0, GameManager.GameGrid.entryslots.Length);
         }
         else
             return (int)maxChildNode.Value.lastMove.x;
     }
 
 
-    public List<Configuration> GetNextConfigurations(
-        Configuration currentConfiguration, int playerOrder)
+    void StartBuildTree(Configuration currConfiguration)
     {
-        newConfigurations.Clear();
+        tree = new MinimaxTree<Configuration>(currConfiguration);
+        nodeList.Clear();
+        nodeList.AddLast(tree.Root);
+        MinimaxTreeNode<Configuration> currentNode = nodeList.First.Value;
+
+        while (nodeList.Count > 0)
+        {
+            currentNode = nodeList.First.Value;
+            nodeList.RemoveFirst();
+            List<Configuration> children =
+                GetNextConfigurations(currentNode.Value);
+
+            //foreach (Configuration child in children)
+            //{
+            for (int i = 0; i < children.Count; i++)
+            {
+
+                MinimaxTreeNode<Configuration> childNode =
+                    new MinimaxTreeNode<Configuration>(
+                        children[i], currentNode);
+                ////if (childNode.determineDepth(childNode) < GameManager.currentAI_ThinkDepth)
+                //if (childNode.determineDepth(childNode) < 5)
+                //{
+                    //tree.AddNode(childNode);
+                    int threadNbr = i;
+
+                    //BuildTreePart(childNode.Value, threadNbr);
+                ThreadQueuer.StartThreadedFunction(() => { BuildTreePart(childNode.Value, threadNbr); });
+                //if (!childNode.Value.WinningConfiguration)
+                //    nodeList.AddLast(childNode);
+                //}
+            }
+
+
+        }
+        //}
+        //Debug.Log(tree.ToString());
+        //return tree;
+    }
+    public List<Configuration> GetNextConfigurations(
+       Configuration currentConfiguration)
+    {
+        List<Configuration> newConfigurations =    new List<Configuration>();
         for (int x = 0; x < currentConfiguration.SimplifiedGrid.GetLength(0); x++)
         {
             for (int y = 0; y < currentConfiguration.SimplifiedGrid.GetLength(1); y++)
             {
-                if (currentConfiguration.SimplifiedGrid[x, y] == 0)             
+                if (currentConfiguration.SimplifiedGrid[x, y] == 0)
                 {
-                    Configuration NewConf = new Configuration(currentConfiguration.SimplifiedGrid);
-                    NewConf.SimplifiedGrid[x, y] = playerOrder + 1;
+                    int ChildIndex = 0;
+                    if (currentConfiguration.PlayerIndex == 0)
+                        ChildIndex = 1;
+                    else if (currentConfiguration.PlayerIndex == 1)
+                        ChildIndex = 0;
+                    Configuration NewConf = new Configuration(currentConfiguration.SimplifiedGrid, new Vector2(x, y), ChildIndex);
                     newConfigurations.Add(NewConf);
-                    NewConf.lastMove = new Vector2(x, y);
+                    //Debug.Log(NewConf.ToString());
                     break;
                 }
             }
         }
         return newConfigurations;
     }
-
-    MinimaxTree<Configuration> BuildTree(Configuration currConfiguration, int PlayerStart)
+    void BuildTreePart(Configuration currConfig, int threadNumber )
     {
-        MinimaxTree<Configuration> tree =
-    new MinimaxTree<Configuration>(currConfiguration,PlayerStart);
-        nodeList.Clear();
-        nodeList.AddLast(tree.Root);
-        while (nodeList.Count > 0)
+        //Debug.Log("start.");
+        //EventManager.CallThreadEvent(2);
+        System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+        Configuration childconfig = new Configuration(currConfig);
+        LinkedList<MinimaxTreeNode<Configuration>> PartNodeList = new LinkedList<MinimaxTreeNode<Configuration>>();
+        MinimaxTree<Configuration> Childtree = new MinimaxTree<Configuration>(childconfig);
+        //Debug.Log(Childtree.ToString());
+        PartNodeList.AddLast(Childtree.Root);
+        MinimaxTreeNode<Configuration> currentChildNode =
+        PartNodeList.First.Value;
+
+        while (PartNodeList.Count > 0)
         {
-            MinimaxTreeNode<Configuration> currentNode =
-                nodeList.First.Value;
-            nodeList.RemoveFirst(); 
-            if (currentNode.Value.FourConnected)
+            //Debug.Log(PartNodeList.Count);
+            currentChildNode = PartNodeList.First.Value;
+            PartNodeList.RemoveFirst();
+            
+            if (currentChildNode.Value.WinningConfiguration)
             {
-                currentNode.Value.WinningConfiguration = true;
-                Debug.Log(currentNode.Value.ToString());
+                //Debug.Log(currentChildNode.Value.ToString());
                 continue;
             }
+            List<Configuration> NextChildren =
+                GetNextConfigurations(currentChildNode.Value);
 
-            List<Configuration> children =
-                GetNextConfigurations(currentNode.Value,currentNode.playerOrder);
-            int ChildOrder;
-            foreach (Configuration child in children)
+            foreach (Configuration child in NextChildren)
             {
-                if (currentNode.playerOrder == 0)
-                    ChildOrder = 1;
-                else
-                    ChildOrder = 0;
-
                 MinimaxTreeNode<Configuration> childNode =
                     new MinimaxTreeNode<Configuration>(
-                        child, currentNode,ChildOrder);
+                        child, currentChildNode);
 
                 if (childNode.determineDepth(childNode) < GameManager.currentAI_ThinkDepth)
+                    if (childNode.determineDepth(childNode) < 5)
                 {
-                    tree.AddNode(childNode);
-                    nodeList.AddLast(childNode);
+                    Childtree.AddNode(childNode);
+                    if (!childNode.Value.WinningConfiguration)
+                        PartNodeList.AddLast(childNode);
                 }
             }
         }
-        return tree;
+
+        tree.AddBranch(Childtree, tree);
+        //Action aFunction = () =>
+        //{
+
+        //    Debug.Log("The results of the child thread are being applied to a Unity GameObject safely.");
+
+        //};
+        //ThreadQueuer.QueueMainThreadFunction(aFunction);
+        sw.Stop();
+        Debug.Log("Three Build : Done! Elapsed time: " + sw.ElapsedMilliseconds / 1000f);
+        EventManager.CallThreadEndEvent((float)threadNumber);
+
     }
+   
 
     /// <summary>
     /// Assigns minimax scores to the tree nodes
     /// </summary>
-    /// <param name="tree">tree to mark with scores</param>
+    /// <param name="SubTree">tree to mark with scores</param>
     /// <param name="maximizing">whether or not we're maximizing</param>
-    void Minimax(MinimaxTreeNode<Configuration> tree,
+    void Minimax(MinimaxTreeNode<Configuration> SubTree,
         bool maximizing)
     {
         // recurse on children
-        IList<MinimaxTreeNode<Configuration>> children = tree.Children;
+        IList<MinimaxTreeNode<Configuration>> children = SubTree.Children;
         if (children.Count > 0)
         {
             foreach (MinimaxTreeNode<Configuration> child in children)
@@ -150,11 +228,11 @@ public class Player
             // set default node minimax score
             if (maximizing)
             {
-                tree.MinimaxScore = int.MinValue;
+                SubTree.MinimaxScore = int.MinValue;
             }
             else
             {
-                tree.MinimaxScore = int.MaxValue;
+                SubTree.MinimaxScore = int.MaxValue;
             }
 
             // find maximum or minimum value in children
@@ -163,17 +241,17 @@ public class Player
                 if (maximizing)
                 {
                     // check for higher minimax score
-                    if (child.MinimaxScore > tree.MinimaxScore)
+                    if (child.MinimaxScore > SubTree.MinimaxScore)
                     {
-                        tree.MinimaxScore = child.MinimaxScore;
+                        SubTree.MinimaxScore = child.MinimaxScore;
                     }
                 }
                 else
                 {
                     // minimizing, check for lower minimax score
-                    if (child.MinimaxScore < tree.MinimaxScore)
+                    if (child.MinimaxScore < SubTree.MinimaxScore)
                     {
-                        tree.MinimaxScore = child.MinimaxScore;
+                        SubTree.MinimaxScore = child.MinimaxScore;
                     }
                 }
             }
@@ -181,7 +259,7 @@ public class Player
         else
         {
             // leaf nodes are the base case
-            AssignHeuristicMinimaxScore(tree, maximizing);
+            AssignHeuristicMinimaxScore(SubTree, maximizing);
         }
     }
 
@@ -195,13 +273,13 @@ public class Player
     {
         if (maximizing)
         {
-            // other player took the last teddy
-            node.MinimaxScore = 1;
+            // Player2 Wins
+            node.MinimaxScore = 0 - Mathf.Pow(10, -node.determineDepth(node)+1);
         }
         else
         {
-            // we took the last teddy
-            node.MinimaxScore = 0;
+            // Player1 Wins
+            node.MinimaxScore = 0 + Mathf.Pow(10,-node.determineDepth(node)+1);
         }
     }
 
@@ -261,7 +339,7 @@ public class Player
             //    }
             //}
             //else
-            node.MinimaxScore = 0.5f;
+            node.MinimaxScore = 0f;
         }
     }
 

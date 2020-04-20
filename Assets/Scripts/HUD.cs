@@ -265,6 +265,10 @@ public class HUD : MonoBehaviour
                     GameManager.playedCoins.Remove(coinToTakeBack);
                     FindObjectOfType<GamePlayHandler>().ReturnCoinToStack(coinToTakeBack);
                 }
+                if (GameManager.playedCoins.Count == 1)
+                {
+                    GameManager.FirstMove = true;
+                }
 
                 break;
 

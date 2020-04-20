@@ -11,7 +11,10 @@ public class Configuration
 {
     #region Fields
 
-    List<int> bins = new List<int>();
+    public bool WinningConfiguration;
+    public int WinningPlayer; // Replace ByPlayerIndx
+
+    public int PlayerIndex; // Player that made the move that lead to the current Configuration.
     public int[,] SimplifiedGrid;
     public Vector2 lastMove = new Vector2(-1, -1);
 
@@ -23,8 +26,14 @@ public class Configuration
     /// Constructor
     /// </summary>
     /// <param name="binContents">contents of each bin</param>
-    public Configuration(GameGrid grid)
+    public Configuration(GameGrid grid, int playerIndex)
     {
+        if (GameManager.FirstMove)
+        {
+            playerIndex = -1;
+            GameManager.FirstMove = false;
+        }
+        SimplifiedGrid = null;
         SimplifiedGrid = new int[grid.Width, grid.Height];
         for (int i = 0; i < grid.Width; i++)
         {
@@ -37,13 +46,30 @@ public class Configuration
                 }
                 else
                 {
-                    SimplifiedGrid[i, j] = slot.Owner.playingOrder + 1;
+                    SimplifiedGrid[i, j] = slot.Owner.PlayerIndex + 1;
                 }
             }
         }
+        if (playerIndex == 0)
+        {
+            playerIndex = 1;
+        }
+        else if (playerIndex == 1)
+        {
+            playerIndex = 0;
+        }
+        PlayerIndex = playerIndex;
     }
-    public Configuration(int[,] simplifiedGrid)
+    /// <summary>
+    /// For Creating the next hypothetic Configuration. 
+    /// </summary>
+    /// <param name="simplifiedGrid">current Grid</param>
+    /// <param name="newMove">Next Move to Make</param>
+    /// <param name="NextPlayerIndex">Player that is making that next move</param>
+    public Configuration(int[,] simplifiedGrid, Vector2 newMove,  int NextPlayerIndex)
     {
+        SimplifiedGrid = null;
+
         SimplifiedGrid = new int[simplifiedGrid.GetLength(0), simplifiedGrid.GetLength(1)];
 
         for (int x = 0; x < simplifiedGrid.GetLength(0); x++)
@@ -53,16 +79,44 @@ public class Configuration
                 SimplifiedGrid[x, y] = simplifiedGrid[x, y];
             }
         }
+        if (!CheckOutSide(newMove))
+        {
+            SimplifiedGrid[(int)newMove.x, (int)newMove.y] = NextPlayerIndex + 1;
+        }
+        else
+            Debug.LogError("Invalid Move: " + newMove.ToString());
+        PlayerIndex = NextPlayerIndex;
+        lastMove = newMove;
+        if (CheckNeigbours(newMove))
+        {
+            WinningConfiguration = true;
+        }       
     }
 
+    /// <summary>
+    /// For Creating an Instance of the current Configuration. 
+    /// </summary>
+    /// <param name="simplifiedGrid">current Grid</param>
+    public Configuration(Configuration config)
+    {
+        SimplifiedGrid = null;
+        SimplifiedGrid = new int[config.SimplifiedGrid.GetLength(0), config.SimplifiedGrid.GetLength(1)];
+
+        for (int x = 0; x < config.SimplifiedGrid.GetLength(0); x++)
+        {
+            for (int y = 0; y < config.SimplifiedGrid.GetLength(1); y++)
+            {
+                SimplifiedGrid[x, y] = config.SimplifiedGrid[x, y];
+            }
+        }
+        PlayerIndex = config.PlayerIndex;
+        WinningConfiguration = config.WinningConfiguration;
+        lastMove = config.lastMove;
+    }
 
     #endregion
 
     #region Properties
-
-
-
-
 
     public bool FourConnected
     {
@@ -74,82 +128,27 @@ public class Configuration
             for (int x = 0; x < SimplifiedGrid.GetLength(0); x++)
             {
                 for (int y = 0; y < SimplifiedGrid.GetLength(1); y++)
-                {
-                   
+                {                   
                     win = CheckNeigbours(new Vector2(x, y));
                     if (win)
                     {
                         //Debug.Log("WinningPlayer:" + WinningPlayer);
                         //Debug.Log("WinningConfig:" + this.ToString()); ;
-
-
                         return win;
-
                     }
                 }
             }
             //Debug.Log("Config:" + this.ToString()); ;
             //Debug.Log("Winning:" + win); ;
-
             return win;
         }
     }
-    public bool WinningConfiguration;
-
-    public int WinningPlayer;
 
 
-    /// <summary>
-    /// Gets a read-only list of the bin contents
-    /// </summary>
-    public IList<int> Bins
+    public bool checkNewCoin(int x, int y)
     {
-        get { return bins.AsReadOnly(); }
-    }
-
-    /// <summary>
-    /// Gets whether all the bins in the configuration are empty
-    /// </summary>
-    public bool Empty
-    {
-        get
-        {
-            foreach (int bin in bins)
-            {
-                if (bin > 0)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-
-    public IList<int> NonEmptyBins
-    {
-        get {
-            List<int> binCounts = new List<int>();
-            foreach (int bin in Bins)
-            {
-                if (bin> 0)
-                {
-                    binCounts.Add(bin);
-                }
-            }
-            return binCounts.AsReadOnly(); 
-        }
-    }
-    public int TotalNumberOfBears
-    {
-        get
-        {
-            int total = 0;
-            foreach (int bin in Bins)
-            {
-                total = total + bin;
-            }
-            return total;
-        }
+        bool win = CheckNeigbours(new Vector2(x, y));
+        return win;
     }
 
     #endregion
@@ -163,11 +162,11 @@ public class Configuration
     public override string ToString()
     {
         StringBuilder builder = new StringBuilder();
-        builder.Append("Configuration: "+ "\n");
+        builder.Append("PlayerIndex: " + PlayerIndex + ", Winning:" + WinningConfiguration + "\n");
+        //builder.Append("Configuration: "+ "\n");
 
         for (int y = SimplifiedGrid.GetLength(1)-1; y >=0 ; y--)
         {
-
             for (int x = 0; x < SimplifiedGrid.GetLength(0); x++)
             {
                 builder.Append(" " + SimplifiedGrid[x, y] + " ");
@@ -181,47 +180,33 @@ public class Configuration
 
     public bool CheckNeigbours(Vector2 gridSlot)
     {
-        //string str1 = "";
-        //foreach (var item in getEast(gridSlot))
-        //{
-        //    str1 = str1 + " , " + item;
-        //}
-        //string str2 = "";
-        //foreach (var item in getNorthEast(gridSlot))
-        //{
-        //    str2 = str2 + " , " + item;
-        //}
-        //string str3 = "";
-        //foreach (var item in getNorth(gridSlot))
-        //{
-        //    str3 = str3 + " , " + item;
-        //}
-        //string str4 = "";
-        //foreach (var item in getNorthWest(gridSlot))
-        //{
-        //    str4 = str4 + " , " + item;
-        //}
-
-        //Debug.Log("East:" + str1 + "\n"+ "NorthEast:" + str2 + "\n" + "North:" + str3 + "\n" + "NorthWest:" + str4 + "\n");
-
         bool result = true;
 
-        result = CheckOwner(getEast(gridSlot));
+        result = CheckWinning(getEast(gridSlot));
         if (result)
             return result;
 
-        result = CheckOwner(getNorth(gridSlot));
+        result = CheckWinning(getNorth(gridSlot));
         if (result)
             return result;
-
-        result = CheckOwner(getNorthEast(gridSlot));
+        result = CheckWinning(getNorthEast(gridSlot));
         if (result)
             return result;
-
-        result = CheckOwner(getNorthWest(gridSlot));
+        result = CheckWinning(getNorthWest(gridSlot));
         if (result)
             return result;
-
+        result = CheckWinning(getWest(gridSlot));
+        if (result)
+            return result;
+        result = CheckWinning(getSouthWest(gridSlot));
+        if (result)
+            return result;
+        result = CheckWinning(getSouth(gridSlot));
+        if (result)
+            return result;
+        result = CheckWinning(getSouthEast(gridSlot));
+        if (result)
+            return result;
         return result;
     }
 
@@ -239,39 +224,31 @@ public class Configuration
         return result;
     }
 
-    bool CheckOwner(List<int> slots)
+    bool CheckWinning(List<int> slots)
     {
-        WinningPlayer = -1;
         bool result = true;
-       
+        foreach (var item in slots)
+        {
+            if (item == 0)
+            {
+                return false;
+            }
+        }
+
         if (slots.Count == 4)
         {
-            int ind = 0;
-           
-            while (slots[ind]==0)
-            {
-                ind++;
-                if (ind > slots.Count-1)
-                    return false;
-            }
-            WinningPlayer = slots[ind];
-               
-            foreach (var item in slots)
-            {
-                if (item != WinningPlayer)
-                {
-                    result = false;
-                    break;
-                }
-            }
-
+            int sum = getSum(slots.ToArray());
+            if (sum == 4 || sum == 8)
+                result = true;
+            else
+                result = false;
         }
         else
             result = false;
-        WinningPlayer = WinningPlayer - 1;
         return result;
 
     }
+
     public List<int> getEast(Vector2 start)
     {
         List<int> temp = new List<int>();
@@ -324,10 +301,74 @@ public class Configuration
         }
         return temp;
     }
-
-
-
+    public List<int> getWest(Vector2 start)
+    {
+        List<int> temp = new List<int>();
+        Vector2 ende = start + new Vector2(-3, 0);
+        if (!CheckOutSide(ende))
+        {
+            for (int i = 0; i <= 3; i++)
+            {
+                temp.Add(SimplifiedGrid[(int)start.x - i, (int)start.y]);
+            }
+        }
+        return temp;
+    }
+    public List<int> getSouthWest(Vector2 start)
+    {
+        List<int> temp = new List<int>();
+        Vector2 ende = start + new Vector2(-3, -3);
+        if (!CheckOutSide(ende))
+        {
+            for (int i = 0; i <= 3; i++)
+            {
+                temp.Add(SimplifiedGrid[(int)start.x - i, (int)start.y - i]);
+            }
+        }
+        return temp;
+    }
+    public List<int> getSouth(Vector2 start)
+    {
+        List<int> temp = new List<int>();
+        Vector2 ende = start + new Vector2(0, -3);
+        if (!CheckOutSide(ende))
+        {
+            for (int i = 0; i <= 3; i++)
+            {
+                temp.Add(SimplifiedGrid[(int)start.x, (int)start.y - i]);
+            }
+        }
+        return temp;
+    }
+    public List<int> getSouthEast(Vector2 start)
+    {
+        List<int> temp = new List<int>();
+        Vector2 ende = start + new Vector2(3, -3);
+        if (!CheckOutSide(ende))
+        {
+            for (int i = 0; i <= 3; i++)
+            {
+                temp.Add(SimplifiedGrid[(int)start.x + i, (int)start.y - i]);
+            }
+        }
+        return temp;
+    }
 
 
     #endregion
+
+    int getSum(int[] array)
+    {
+        int sum = 0;
+        if (array.Length > 0)
+        {
+            foreach (int item in array)
+            {
+                sum += item;
+            }
+        }
+        else
+            sum = -1;
+        return sum;
+    }
 }

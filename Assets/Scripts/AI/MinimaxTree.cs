@@ -1,6 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using System.ComponentModel;
+using UnityEngine;
+using UnityEngine.Bindings;
+using UnityEngine.Internal;
 
 /// <summary>
 /// A minimax tree
@@ -11,7 +16,7 @@ public class MinimaxTree<T>
     #region Fields
 
     MinimaxTreeNode<T> root = null;
-    List<MinimaxTreeNode<T>> nodes = new List<MinimaxTreeNode<T>>();
+    public readonly List<MinimaxTreeNode<T>> nodes = new List<MinimaxTreeNode<T>>();
     #endregion
 
     #region Constructor
@@ -20,9 +25,9 @@ public class MinimaxTree<T>
     /// Constructor
     /// </summary>
     /// <param name="value">value of the root node</param>
-    public MinimaxTree(T value,int Order)
+    public MinimaxTree(T value)
     {
-        root = new MinimaxTreeNode<T>(value, null,Order);
+        root = new MinimaxTreeNode<T>(value, null);
         nodes.Add(root);
     }
 
@@ -90,6 +95,7 @@ public class MinimaxTree<T>
         }
         else if (node.Parent.Children.Contains(node))
         {
+            UnityEngine.Debug.Log(1);
             // node already a child of parent
             return false;
         }
@@ -99,6 +105,23 @@ public class MinimaxTree<T>
             nodes.Add(node);
             return node.Parent.AddChild(node);
         }
+    }
+
+
+    public bool AddBranch(MinimaxTree<T> branchTree, MinimaxTree<T> parentTree)
+    {
+        if (branchTree == null|| parentTree == null)
+        {
+            return false;
+        }
+        else
+        {
+            parentTree.nodes.AddRange(branchTree.nodes);
+
+            return parentTree.Root.AddChild(branchTree.Root);
+
+        }
+
     }
 
     /// <summary>
@@ -188,8 +211,11 @@ public class MinimaxTree<T>
         {
             builder.Append("null");
         }
+        //UnityEngine.Debug.Log(nodes.Count);
         for (int i = 0; i < Count; i++)
         {
+            //UnityEngine.Debug.Log(i);
+
             builder.Append(nodes[i].ToString());
             if (i < Count - 1)
             {

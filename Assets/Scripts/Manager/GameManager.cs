@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-
+    ThreadQueuer threadQueuer;
     // TODO: Stats Tracken for KI
 
     public static GameManager gameManager;
@@ -20,9 +22,10 @@ public class GameManager : MonoBehaviour
     public static Player currentPlayer;
 
     public static States State;
-
+    public bool[] _ThreadsFinished;
     public static List<Coin> playedCoins = new List<Coin>();
 
+    [TextArea(5, 6)] public string InfoText0 = "empty";
     public string InfoText1 = "empty";
     public string InfoText2 = "empty";
     public string InfoText3 = "empty";
@@ -30,9 +33,14 @@ public class GameManager : MonoBehaviour
     public string InfoText5 = "empty";
     [TextArea(5, 6)] public string InfoText6 = "empty";
 
+    public static bool FirstMove;
 
     private void Awake()
     {
+        FirstMove = true;
+        _ThreadsFinished = new bool[0];
+
+        threadQueuer = GetComponent<ThreadQueuer>();
         if (gameManager == null)
         {
             DontDestroyOnLoad(this);
@@ -44,20 +52,30 @@ public class GameManager : MonoBehaviour
         Players[1] = new Player("Human2", Player.PlayerType.Human, 1);
         
     }
+    private void OnEnable()
+    {
+        EventManager.ThreadEvent += printConfig;
+        EventManager.ThreadEndEvent += OnThreadsFinished;
+    }
+    private void OnDisable()
+    {
+        EventManager.ThreadEvent -= printConfig;
+        EventManager.ThreadEndEvent -= OnThreadsFinished;
+    }
 
-
-
+    void printConfig(Configuration toPrint)
+    {
+        print(toPrint.ToString());
+    }
 
     void Start()
     {
-
     }
 
     // Update is called once per frame
     void Update()
     {
         InfoText1 = "MenuState: " + States.currentMenuState;
-
         InfoText2 = "GameState: " + States.currentGameState;
         InfoText3 = "TurnState: " + States.currentTurnState;     
         InfoText4 = "GamePlayState: " + States.currentGamePlayState;
@@ -81,9 +99,62 @@ public class GameManager : MonoBehaviour
             //{
             //    print(item.ToString());
             //}
-            currentPlayer.TakeTurn();
+            //ThreadQueuer.StartThreadedFunction(currentPlayer.TreeBuilder);
+            // ThreadQueuer.StartThreadedFunction(() => { Testfunction(1, new Configuration(GameGrid)); });
+
+                //InfoText0 = "Tree: " + currentPlayer.tree.ToString();
+                //InfoText0 = "Tree: " + currentPlayer.tree.Count;
+        }
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            //print(new Configuration(GameGrid).ToString());
+
+            //foreach (Configuration item in currentPlayer.GetNextConfigurations(new Configuration(GameGrid)))
+            //{
+            //    print(item.ToString());
+            //}
+            _ThreadsFinished = new bool[GameGrid.Width];
+            for (int i = 0; i < _ThreadsFinished.Length; i++)
+            {
+                _ThreadsFinished[i] = false;
+            }
+            currentPlayer.TreeBuilder(currentPlayer.PlayerIndex); ;
         }
 
-
     }
+    void OnThreadsFinished(float threadNumber)
+    {
+        bool callNextTurn = true;
+        if (_ThreadsFinished.Length == 0)
+        {
+            ;
+            _ThreadsFinished[(int)threadNumber] = true;
+        }
+        else
+        {
+            _ThreadsFinished[(int)threadNumber] = true;
+        }
+
+        for (int i = 0; i < _ThreadsFinished.Length; i++)
+        {
+            if (!_ThreadsFinished[i])
+            {
+                callNextTurn = _ThreadsFinished[i];
+                break;
+            }
+        }
+        if (callNextTurn)
+        {
+            print(currentPlayer.GetNextMove());
+            _ThreadsFinished = new bool[0];
+        }
+    }
+
+    //int Testfunction(int test1, Configuration test2)
+    //{
+    //    print(test2.ToString());
+
+    //    return test1;
+    //}
+
 }

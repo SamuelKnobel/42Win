@@ -68,8 +68,6 @@
     <Compile Include="Assets\Scripts\AI\MinimaxTree.cs" />
     <Compile Include="Assets\Scripts\AI\MinimaxTreeNode.cs" />
     <Compile Include="Assets\Scripts\Audiomanager.cs" />
-    <Compile Include="Assets\Scripts\Enums\EnemyType.cs" />
-    <Compile Include="Assets\Scripts\Enums\PlayerName.cs" />
     <Compile Include="Assets\Scripts\EnvironmentGenerator.cs" />
     <Compile Include="Assets\Scripts\Event\EventManager.cs" />
     <Compile Include="Assets\Scripts\GamePlayHandler.cs" />
@@ -85,6 +83,7 @@
     <Compile Include="Assets\Scripts\States\MenuStates.cs" />
     <Compile Include="Assets\Scripts\States\States.cs" />
     <Compile Include="Assets\Scripts\States\TurnState.cs" />
+    <Compile Include="Assets\Scripts\ThreadQueuer.cs" />
     <Compile Include="Assets\Scripts\Utils\Difficulty.cs" />
     <Compile Include="Assets\Scripts\Utils\Enumeration.cs" />
     <Compile Include="Assets\Scripts\Utils\GameInitializer.cs" />

@@ -39,6 +39,9 @@ public static class EventManager
         else
             Debug.LogWarning("No Listener for CallGameEndEvent");
     }
+      
+
+
 
 
 
@@ -49,7 +52,29 @@ public static class EventManager
     #region Events with Float  Input
     public delegate void FloatEventAction(float input);
 
+    public static event FloatEventAction ThreadEndEvent;
 
+    //public static event FloatEventAction ThreadEvent;
+
+    //public static void CallThreadEvent(float input)
+    //{
+    //    if (ThreadEvent != null)
+    //    {
+    //        ThreadEvent.Invoke(input);
+    //    }
+    //    else
+    //        Debug.LogWarning("No Listener for CallGameEndEvent");
+    //}
+
+    public static void CallThreadEndEvent(float input)
+    {
+        if (ThreadEndEvent != null)
+        {
+            ThreadEndEvent.Invoke(input);
+        }
+        else
+            Debug.LogWarning("No Listener for CallThreadEndEvent");
+    }
 
     #endregion
 
@@ -74,5 +99,18 @@ public static class EventManager
 
     #endregion
 
+    #region Events with Config  Input
+    public delegate void ConfigEventAction(Configuration input);
+    public static event ConfigEventAction ThreadEvent;
 
+    public static void CallThreadEvent(Configuration input)
+    {
+        if (ThreadEvent != null)
+        {
+            ThreadEvent.Invoke(input);
+        }
+        else
+            Debug.LogWarning("No Listener for CallThreadEvent");
+    }
+    #endregion
 }

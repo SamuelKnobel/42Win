@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 /// <summary>
@@ -14,7 +15,6 @@ public class MinimaxTreeNode<T>
     MinimaxTreeNode<T> parent;
     List<MinimaxTreeNode<T>> children;
     float minimaxScore = 0;
-    public int playerOrder;
 
     #endregion
 
@@ -25,12 +25,11 @@ public class MinimaxTreeNode<T>
     /// </summary>
     /// <param name="value">value for the node</param>
     /// <param name="parent">parent for the node</param>
-    public MinimaxTreeNode(T value, MinimaxTreeNode<T> parent, int PlayerOrder)
+    public MinimaxTreeNode(T value, MinimaxTreeNode<T> parent)
     {
         this.value = value;
         this.parent = parent;
         children = new List<MinimaxTreeNode<T>>();
-        playerOrder = PlayerOrder;
     }
 
     #endregion
@@ -152,9 +151,11 @@ public class MinimaxTreeNode<T>
             nodeString.Append("null");
         }
         nodeString.Append(" Minimax Score: " + minimaxScore);
-        nodeString.Append(" Children: ");
+        nodeString.Append(" Children: "+ "\n");
+
         for (int i = 0; i < children.Count; i++)
         {
+            //UnityEngine.Debug.Log(i);
             nodeString.Append(children[i].Value + " ");
         }
         nodeString.Append("]");
