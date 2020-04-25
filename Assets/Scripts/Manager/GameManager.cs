@@ -35,6 +35,7 @@ public class GameManager : MonoBehaviour
 
     public static bool FirstMove;
 
+
     private void Awake()
     {
         FirstMove = true;
@@ -55,12 +56,12 @@ public class GameManager : MonoBehaviour
     private void OnEnable()
     {
         EventManager.ThreadEvent += printConfig;
-        EventManager.ThreadEndEvent += OnThreadsFinished;
+        EventManager.SingleThreadEndEvent += OnThreadsFinished;
     }
     private void OnDisable()
     {
         EventManager.ThreadEvent -= printConfig;
-        EventManager.ThreadEndEvent -= OnThreadsFinished;
+        EventManager.SingleThreadEndEvent -= OnThreadsFinished;
     }
 
     void printConfig(Configuration toPrint)
@@ -72,8 +73,8 @@ public class GameManager : MonoBehaviour
     {
     }
 
-    // Update is called once per frame
-    void Update()
+// Update is called once per frame
+void Update()
     {
         InfoText1 = "MenuState: " + States.currentMenuState;
         InfoText2 = "GameState: " + States.currentGameState;
@@ -102,52 +103,58 @@ public class GameManager : MonoBehaviour
             //ThreadQueuer.StartThreadedFunction(currentPlayer.TreeBuilder);
             // ThreadQueuer.StartThreadedFunction(() => { Testfunction(1, new Configuration(GameGrid)); });
 
-                //InfoText0 = "Tree: " + currentPlayer.tree.ToString();
-                //InfoText0 = "Tree: " + currentPlayer.tree.Count;
+            //InfoText0 = "Tree: " + currentPlayer.tree.ToString();
+            //InfoText0 = "Tree: " + currentPlayer.tree.Count;
+            StartTreeBuilding();
+            currentPlayer.StartBuildTree(currentPlayer.PlayerIndex);
         }
         if (Input.GetKeyDown(KeyCode.M))
         {
-            //print(new Configuration(GameGrid).ToString());
-
-            //foreach (Configuration item in currentPlayer.GetNextConfigurations(new Configuration(GameGrid)))
-            //{
-            //    print(item.ToString());
-            //}
-            _ThreadsFinished = new bool[GameGrid.Width];
-            for (int i = 0; i < _ThreadsFinished.Length; i++)
+            for (int i = 0; i < currentPlayer.tree.TempBranches.Length; i++)
             {
-                _ThreadsFinished[i] = false;
+                currentPlayer.tree.AddBranch(currentPlayer.tree.TempBranches[i], currentPlayer.tree);
             }
-            currentPlayer.TreeBuilder(currentPlayer.PlayerIndex); ;
+            print(currentPlayer.tree);
+            print(currentPlayer.FindBestMove());
+
+        }
+
+        if (States.compareState(GameStates.currentGameState, States.Enum.Game_InGame))
+        {
+            if (currentPlayer.playerType == Player.PlayerType.Computer)
+            {
+                if (!FindObjectOfType<ThreadQueuer>().ThredsRunning)
+                {
+                    if (currentPlayer.tree.Count == 1)
+                    {
+                        Debug.Log("AllThreads Finished");
+                        for (int i = 0; i < currentPlayer.tree.TempBranches.Length; i++)
+                        {
+                            currentPlayer.tree.AddBranch(currentPlayer.tree.TempBranches[i], currentPlayer.tree);
+                        }
+                        //FindObjectOfType<GamePlayHandler>().NextMoveCol = currentPlayer.FindBestMove();
+                        EventManager.CallAllThreadEndEvent(-1);
+                    }
+                }
+            }
         }
 
     }
-    void OnThreadsFinished(float threadNumber)
+    public void StartTreeBuilding()
     {
-        bool callNextTurn = true;
-        if (_ThreadsFinished.Length == 0)
-        {
-            ;
-            _ThreadsFinished[(int)threadNumber] = true;
-        }
-        else
-        {
-            _ThreadsFinished[(int)threadNumber] = true;
-        }
-
+        Debug.Log("StartBuilding Tree");
+        _ThreadsFinished = new bool[GameGrid.Width];
         for (int i = 0; i < _ThreadsFinished.Length; i++)
         {
-            if (!_ThreadsFinished[i])
-            {
-                callNextTurn = _ThreadsFinished[i];
-                break;
-            }
+            _ThreadsFinished[i] = false;
         }
-        if (callNextTurn)
-        {
-            print(currentPlayer.GetNextMove());
-            _ThreadsFinished = new bool[0];
-        }
+    }
+
+
+
+    void OnThreadsFinished(float threadNumber)
+    {
+        _ThreadsFinished[(int)threadNumber] = true;
     }
 
     //int Testfunction(int test1, Configuration test2)

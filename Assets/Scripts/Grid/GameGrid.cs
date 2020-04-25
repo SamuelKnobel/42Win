@@ -169,7 +169,12 @@ public class GameGrid
 
     public bool AddCoinAtPosition(int x, Coin Coin)
     {
+
         bool positioned = false;
+        if (x == -1)
+        {
+            return false;
+        }
         for (int i = 0; i < Height; i++)
         {
             if (gridslots[x, i].isFilled)

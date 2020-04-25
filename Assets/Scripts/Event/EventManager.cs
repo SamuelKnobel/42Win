@@ -52,7 +52,8 @@ public static class EventManager
     #region Events with Float  Input
     public delegate void FloatEventAction(float input);
 
-    public static event FloatEventAction ThreadEndEvent;
+    public static event FloatEventAction SingleThreadEndEvent;
+    public static event FloatEventAction AllThreadsEndedEvent;
 
     //public static event FloatEventAction ThreadEvent;
 
@@ -68,12 +69,21 @@ public static class EventManager
 
     public static void CallThreadEndEvent(float input)
     {
-        if (ThreadEndEvent != null)
+        if (SingleThreadEndEvent != null)
         {
-            ThreadEndEvent.Invoke(input);
+            SingleThreadEndEvent.Invoke(input);
         }
         else
             Debug.LogWarning("No Listener for CallThreadEndEvent");
+    }    
+    public static void CallAllThreadEndEvent(float input)
+    {
+        if (AllThreadsEndedEvent != null)
+        {
+            AllThreadsEndedEvent.Invoke(input);
+        }
+        else
+            Debug.LogWarning("No Listener for CallAllThreadEndEvent");
     }
 
     #endregion

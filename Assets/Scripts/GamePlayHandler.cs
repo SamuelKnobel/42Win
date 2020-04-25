@@ -16,16 +16,33 @@ public class GamePlayHandler : MonoBehaviour
     [SerializeField]    int currentCollum;
 
     public Timer RemainingTime;
+    //public Timer ComputerMoveTimer;
 
     public int NextMoveCol = -1;
     int numberofTry = 0;
 
+
+    private void OnEnable()
+    {
+        EventManager.AllThreadsEndedEvent += SetNextMoveForComupter;
+    }
+    private void OnDisable()
+    {
+        EventManager.AllThreadsEndedEvent -= SetNextMoveForComupter;
+    }
+
+
+
     // Start is called before the first frame update
     void Awake()
     {
+
         RemainingTime = gameObject.AddComponent<Timer>();
+        //ComputerMoveTimer = gameObject.AddComponent<Timer>();
         RemainingTime.Duration = GameManager.currentPlayer_ThinkTime;
+        //ComputerMoveTimer.Duration = .2f;
     }
+
    public void StartGame()
     {
         GameManager.playedCoins.Clear();
@@ -36,12 +53,7 @@ public class GamePlayHandler : MonoBehaviour
             Destroy(child.gameObject);
         foreach (Transform child in FieldContainer.transform)
             Destroy(child.gameObject);
-        //if (GameGrid != null)
-        //{
-        //    GameGrid.AllEntrySlots = null;
-        //    GameGrid.gridslots = null;
-        //}
-        //GameGrid = new GameGrid();    
+ 
         if (GameManager.GameGrid != null)
         {
             GameManager.GameGrid.AllEntrySlots = null;
@@ -131,12 +143,14 @@ public class GamePlayHandler : MonoBehaviour
         }
         else
         {
+            Debug.Log("Start Computer Move");
             States.SetTurnState(States.Enum.ComputerPlayerTurn);
             Stack2.SetActive(true);
             currentCoin.transform.position = GameManager.GameGrid.entryslots[GameManager.GameGrid.entryslots.Length - 1].WorldPosition_Center;
             currentCollum = GameManager.GameGrid.entryslots.Length - 1;
             RemainingTime.ForceTimerReset(GameManager.currentAI_ThinkTime);
-            NextMoveCol = nextPlayer.GetNextMove();
+            FindObjectOfType<GameManager>().StartTreeBuilding();
+            nextPlayer.StartBuildTree(nextPlayer.PlayerIndex); 
         }
 
         GameManager.currentPlayer = nextPlayer;
@@ -211,20 +225,28 @@ public class GamePlayHandler : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
                 {
                     DropCoin();
-
                 }
             }
             
 
-            if (RemainingTime.Finished&& GameManager.currentPlayer.playerType == Player.PlayerType.Human)
+            if (RemainingTime.Finished)
             {
-                RandomMove();
-            }
-            if (RemainingTime.Finished && GameManager.currentPlayer.playerType == Player.PlayerType.Computer)
-            {
-                ComputerMove();
+                switch (GameManager.currentPlayer.playerType)
+                {
+                    case Player.PlayerType.Human:
+                        RandomMove();
+                        break;
+                    case Player.PlayerType.Computer:
+                        ComputerMove();
+                        break;
+                }
             }
         }
+        //if (ComputerMoveTimer.Finished)
+        //{
+        //    OnSetComputerMoveTimerFinished();
+
+        //}
 
 
     }
@@ -283,7 +305,7 @@ public class GamePlayHandler : MonoBehaviour
     }
     void ComputerMove()
     {
-
+        //NextMoveCol = GameManager.currentPlayer.FindBestMove();
         if (GameManager.GameGrid.AddCoinAtPosition(NextMoveCol, currentCoin.GetComponent<Coin>()))
         {
             if (!CheckIfWin())
@@ -294,6 +316,13 @@ public class GamePlayHandler : MonoBehaviour
         else
             RandomMove();
     }
+
+    void SetNextMoveForComupter(float unused)
+    {
+        NextMoveCol = GameManager.currentPlayer.FindBestMove();
+        print(NextMoveCol);
+    }
+
 
     // TODO: more efficient if ony the new Coin is checked
     public bool CheckIfWin()

@@ -12,7 +12,6 @@ public class Configuration
     #region Fields
 
     public bool WinningConfiguration;
-    public int WinningPlayer; // Replace ByPlayerIndx
 
     public int PlayerIndex; // Player that made the move that lead to the current Configuration.
     public int[,] SimplifiedGrid;
@@ -87,7 +86,7 @@ public class Configuration
             Debug.LogError("Invalid Move: " + newMove.ToString());
         PlayerIndex = NextPlayerIndex;
         lastMove = newMove;
-        if (CheckNeigbours(newMove))
+        if (CheckNeigbours(newMove,4))
         {
             WinningConfiguration = true;
         }       
@@ -118,36 +117,9 @@ public class Configuration
 
     #region Properties
 
-    public bool FourConnected
-    {
-        get
-        {
-            if (SimplifiedGrid == null)
-                return false;
-            bool win= false;
-            for (int x = 0; x < SimplifiedGrid.GetLength(0); x++)
-            {
-                for (int y = 0; y < SimplifiedGrid.GetLength(1); y++)
-                {                   
-                    win = CheckNeigbours(new Vector2(x, y));
-                    if (win)
-                    {
-                        //Debug.Log("WinningPlayer:" + WinningPlayer);
-                        //Debug.Log("WinningConfig:" + this.ToString()); ;
-                        return win;
-                    }
-                }
-            }
-            //Debug.Log("Config:" + this.ToString()); ;
-            //Debug.Log("Winning:" + win); ;
-            return win;
-        }
-    }
-
-
     public bool checkNewCoin(int x, int y)
     {
-        bool win = CheckNeigbours(new Vector2(x, y));
+        bool win = CheckNeigbours(new Vector2(x, y),4);
         return win;
     }
 
@@ -178,33 +150,33 @@ public class Configuration
     }
 
 
-    public bool CheckNeigbours(Vector2 gridSlot)
+    public bool CheckNeigbours(Vector2 gridSlot, int SlotsSize)
     {
         bool result = true;
 
-        result = CheckWinning(getEast(gridSlot));
+        result = CheckWinning(getEast(gridSlot, SlotsSize));
         if (result)
             return result;
 
-        result = CheckWinning(getNorth(gridSlot));
+        result = CheckWinning(getNorth(gridSlot, SlotsSize));
         if (result)
             return result;
-        result = CheckWinning(getNorthEast(gridSlot));
+        result = CheckWinning(getNorthEast(gridSlot, SlotsSize));
         if (result)
             return result;
-        result = CheckWinning(getNorthWest(gridSlot));
+        result = CheckWinning(getNorthWest(gridSlot, SlotsSize));
         if (result)
             return result;
-        result = CheckWinning(getWest(gridSlot));
+        result = CheckWinning(getWest(gridSlot, SlotsSize));
         if (result)
             return result;
-        result = CheckWinning(getSouthWest(gridSlot));
+        result = CheckWinning(getSouthWest(gridSlot, SlotsSize));
         if (result)
             return result;
-        result = CheckWinning(getSouth(gridSlot));
+        result = CheckWinning(getSouth(gridSlot, SlotsSize));
         if (result)
             return result;
-        result = CheckWinning(getSouthEast(gridSlot));
+        result = CheckWinning(getSouthEast(gridSlot, SlotsSize));
         if (result)
             return result;
         return result;
@@ -226,7 +198,6 @@ public class Configuration
 
     bool CheckWinning(List<int> slots)
     {
-        bool result = true;
         foreach (var item in slots)
         {
             if (item == 0)
@@ -235,118 +206,161 @@ public class Configuration
             }
         }
 
+        //if (slots.Count == 4)
+        //{
+        int sum = getSum(slots.ToArray());
+        if ((sum == slots.Count) || (sum == 2* slots.Count))
+          return true;
+        else
+            return false;
+        //}
+        //else
+        //    result = false;
+
+    }
+    public bool CheckNeighbourCloseToWin(Vector2 gridSlot, int SlotsSize)
+    {
+        bool result = true;
+
+        result = CheckCloseToWin(getEast(gridSlot, SlotsSize));
+        if (result)
+            return result;
+
+        result = CheckCloseToWin(getNorth(gridSlot, SlotsSize));
+        if (result)
+            return result;
+        result = CheckCloseToWin(getNorthEast(gridSlot, SlotsSize));
+        if (result)
+            return result;
+        result = CheckCloseToWin(getNorthWest(gridSlot, SlotsSize));
+        if (result)
+            return result;
+        result = CheckCloseToWin(getWest(gridSlot, SlotsSize));
+        if (result)
+            return result;
+        result = CheckCloseToWin(getSouthWest(gridSlot, SlotsSize));
+        if (result)
+            return result;
+        result = CheckCloseToWin(getSouth(gridSlot, SlotsSize));
+        if (result)
+            return result;
+        result = CheckCloseToWin(getSouthEast(gridSlot, SlotsSize));
+        if (result)
+            return result;
+        return result;
+    }
+    bool CheckCloseToWin(List<int> slots)
+    {
         if (slots.Count == 4)
         {
             int sum = getSum(slots.ToArray());
-            if (sum == 4 || sum == 8)
-                result = true;
+            if ((sum == slots.Count-1) || (sum == 2 * slots.Count-2))
+                return true;
             else
-                result = false;
+                return false;
         }
         else
-            result = false;
-        return result;
-
+            return false;
     }
 
-    public List<int> getEast(Vector2 start)
+    public List<int> getEast(Vector2 start, int SlotsSize)
     {
         List<int> temp = new List<int>();
-        Vector2 ende = start + new Vector2(3, 0);
+        Vector2 ende = start + new Vector2(SlotsSize-1, 0);
         if (!CheckOutSide(ende))
         {
-            for (int i = 0; i <= 3; i++)
+            for (int i = 0; i <= SlotsSize-1; i++)
             {
                 temp.Add(SimplifiedGrid[(int)start.x + i, (int)start.y]);
             }
         }
         return temp;
     }
-    public List<int> getNorthEast(Vector2 start)
+    public List<int> getNorthEast(Vector2 start, int SlotsSize)
     {
         List<int> temp = new List<int>();
-        Vector2 ende = start + new Vector2(3, 3);
+        Vector2 ende = start + new Vector2(SlotsSize-1, SlotsSize-1);
         if (!CheckOutSide(ende))
         {
-            for (int i = 0; i <= 3; i++)
+            for (int i = 0; i <= SlotsSize-1; i++)
             {
                 temp.Add(SimplifiedGrid[(int)start.x + i, (int)start.y+i]);
             }
         }
         return temp;
     }
-    public List<int> getNorth(Vector2 start)
+    public List<int> getNorth(Vector2 start, int SlotsSize)
     {
         List<int> temp = new List<int>();
-        Vector2 ende = start + new Vector2(0, 3);
+        Vector2 ende = start + new Vector2(0, SlotsSize-1);
         if (!CheckOutSide(ende))
         {
-            for (int i = 0; i <= 3; i++)
+            for (int i = 0; i <= SlotsSize-1; i++)
             {
                 temp.Add(SimplifiedGrid[(int)start.x, (int)start.y + i]);
             }
         }
         return temp;
     }
-    public List<int> getNorthWest(Vector2 start)
+    public List<int> getNorthWest(Vector2 start, int SlotsSize)
     {
         List<int> temp = new List<int>();
-        Vector2 ende = start + new Vector2(-3, 3);
+        Vector2 ende = start + new Vector2(-SlotsSize+1, SlotsSize-1);
         if (!CheckOutSide(ende))
         {
-            for (int i = 0; i <= 3; i++)
+            for (int i = 0; i <= SlotsSize-1; i++)
             {
                 temp.Add(SimplifiedGrid[(int)start.x-i, (int)start.y + i]);
             }
         }
         return temp;
     }
-    public List<int> getWest(Vector2 start)
+    public List<int> getWest(Vector2 start, int SlotsSize)
     {
         List<int> temp = new List<int>();
-        Vector2 ende = start + new Vector2(-3, 0);
+        Vector2 ende = start + new Vector2(-SlotsSize+1, 0);
         if (!CheckOutSide(ende))
         {
-            for (int i = 0; i <= 3; i++)
+            for (int i = 0; i <= SlotsSize-1; i++)
             {
                 temp.Add(SimplifiedGrid[(int)start.x - i, (int)start.y]);
             }
         }
         return temp;
     }
-    public List<int> getSouthWest(Vector2 start)
+    public List<int> getSouthWest(Vector2 start, int SlotsSize)
     {
         List<int> temp = new List<int>();
-        Vector2 ende = start + new Vector2(-3, -3);
+        Vector2 ende = start + new Vector2(-SlotsSize+1, -SlotsSize+1);
         if (!CheckOutSide(ende))
         {
-            for (int i = 0; i <= 3; i++)
+            for (int i = 0; i <= SlotsSize-1; i++)
             {
                 temp.Add(SimplifiedGrid[(int)start.x - i, (int)start.y - i]);
             }
         }
         return temp;
     }
-    public List<int> getSouth(Vector2 start)
+    public List<int> getSouth(Vector2 start, int SlotsSize)
     {
         List<int> temp = new List<int>();
-        Vector2 ende = start + new Vector2(0, -3);
+        Vector2 ende = start + new Vector2(0, -SlotsSize+1);
         if (!CheckOutSide(ende))
         {
-            for (int i = 0; i <= 3; i++)
+            for (int i = 0; i <= SlotsSize-1; i++)
             {
                 temp.Add(SimplifiedGrid[(int)start.x, (int)start.y - i]);
             }
         }
         return temp;
     }
-    public List<int> getSouthEast(Vector2 start)
+    public List<int> getSouthEast(Vector2 start, int SlotsSize)
     {
         List<int> temp = new List<int>();
-        Vector2 ende = start + new Vector2(3, -3);
+        Vector2 ende = start + new Vector2(SlotsSize-1, -SlotsSize+1);
         if (!CheckOutSide(ende))
         {
-            for (int i = 0; i <= 3; i++)
+            for (int i = 0; i <= SlotsSize-1; i++)
             {
                 temp.Add(SimplifiedGrid[(int)start.x + i, (int)start.y - i]);
             }
@@ -371,4 +385,8 @@ public class Configuration
             sum = -1;
         return sum;
     }
+
+
+
+
 }

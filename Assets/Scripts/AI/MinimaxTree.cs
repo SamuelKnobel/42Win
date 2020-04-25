@@ -17,6 +17,7 @@ public class MinimaxTree<T>
 
     MinimaxTreeNode<T> root = null;
     public readonly List<MinimaxTreeNode<T>> nodes = new List<MinimaxTreeNode<T>>();
+    public MinimaxTree<T>[] TempBranches = new MinimaxTree<T>[0];
     #endregion
 
     #region Constructor
@@ -107,8 +108,22 @@ public class MinimaxTree<T>
         }
     }
 
+    public void GenerateTempBranchList(int ArrayLength)
+    {
+        TempBranches = new MinimaxTree<T>[ArrayLength];
+        for (int i = 0; i < TempBranches.Length; i++)
+        {
+            TempBranches[i] = null;
+        }
+    }
 
-    public bool AddBranch(MinimaxTree<T> branchTree, MinimaxTree<T> parentTree)
+    public void addtoTempBranchList(int ListIndex, MinimaxTree<T> branchTree)
+    {
+        TempBranches[ListIndex] = branchTree;
+    }
+
+
+    public bool AddBranch(MinimaxTree<T> branchTree, MinimaxTree<T> parentTree/*, int threadNumber*/)
     {
         if (branchTree == null|| parentTree == null)
         {
@@ -116,10 +131,16 @@ public class MinimaxTree<T>
         }
         else
         {
-            parentTree.nodes.AddRange(branchTree.nodes);
+            //try
+            //{
+                parentTree.nodes.AddRange(branchTree.nodes);
+            //}
+            //catch(Exception e)
+            //{
+            //    UnityEngine.Debug.Log(e);
 
+            //}
             return parentTree.Root.AddChild(branchTree.Root);
-
         }
 
     }

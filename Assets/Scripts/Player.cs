@@ -37,26 +37,17 @@ public class Player
         playerType = type;
         PlayerIndex = order;
     }
-    public void TreeBuilder(int currentPlayerInd)
-    {
-        //tree = StartBuildTree(new Configuration(GameManager.GameGrid), playingOrder);
 
-        //Debug.Log("start.");
-        ////EventManager.CallThreadEvent(2);
-        //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-        //sw.Start();
-        
-        Configuration StartConfig = new Configuration(GameManager.GameGrid, currentPlayerInd);
-        StartBuildTree(StartConfig);
-        //sw.Stop();
-        //Debug.Log("Three Build : Done! Elapsed time: " + sw.ElapsedMilliseconds / 1000f);
-    }
-    public int GetNextMove()
+    public int FindBestMove()
     {
+        //if (tree == null)
+        //{
+        //    Debug.Log("Running out of Time");
+        //    return -1;
+        //}
         Debug.Log("Start MINMAX");
-        //StartBuildTree(new Configuration(GameManager.GameGrid), playingOrder);
         Minimax(tree.Root, true);
-        Debug.Log(tree.ToString());
+        //Debug.Log(tree.ToString());
         //find child node with maximum score
         IList<MinimaxTreeNode<Configuration>> children =
             tree.Root.Children;
@@ -69,22 +60,20 @@ public class Player
                 maxChildNode = children[i];
             }
         }
-
-        Debug.Log(maxChildNode.Value.ToString());
-        Debug.Log(maxChildNode.Value.lastMove);
-        Debug.Log(maxChildNode.Value.WinningPlayer);
-        if (maxChildNode.MinimaxScore == 0)
-        {
-            Debug.Log("R");
-            return -1;// UnityEngine.Random.Range(0, GameManager.GameGrid.entryslots.Length);
-        }
-        else
+        //if (maxChildNode.MinimaxScore == 0.5f)
+        //{
+        //    Debug.Log("R");
+        //    return -1;// UnityEngine.Random.Range(0, GameManager.GameGrid.entryslots.Length);
+        //}
+        //else
             return (int)maxChildNode.Value.lastMove.x;
     }
 
 
-    void StartBuildTree(Configuration currConfiguration)
+    public void StartBuildTree(int currentPlayerInd)
     {
+        Configuration currConfiguration = new Configuration(GameManager.GameGrid, currentPlayerInd);
+
         tree = new MinimaxTree<Configuration>(currConfiguration);
         nodeList.Clear();
         nodeList.AddLast(tree.Root);
@@ -96,33 +85,18 @@ public class Player
             nodeList.RemoveFirst();
             List<Configuration> children =
                 GetNextConfigurations(currentNode.Value);
+            tree.GenerateTempBranchList(children.Count);
 
-            //foreach (Configuration child in children)
-            //{
             for (int i = 0; i < children.Count; i++)
             {
-
                 MinimaxTreeNode<Configuration> childNode =
                     new MinimaxTreeNode<Configuration>(
                         children[i], currentNode);
-                ////if (childNode.determineDepth(childNode) < GameManager.currentAI_ThinkDepth)
-                //if (childNode.determineDepth(childNode) < 5)
-                //{
-                    //tree.AddNode(childNode);
-                    int threadNbr = i;
 
-                    //BuildTreePart(childNode.Value, threadNbr);
+                 int threadNbr = i;
                 ThreadQueuer.StartThreadedFunction(() => { BuildTreePart(childNode.Value, threadNbr); });
-                //if (!childNode.Value.WinningConfiguration)
-                //    nodeList.AddLast(childNode);
-                //}
             }
-
-
         }
-        //}
-        //Debug.Log(tree.ToString());
-        //return tree;
     }
     public List<Configuration> GetNextConfigurations(
        Configuration currentConfiguration)
@@ -192,7 +166,8 @@ public class Player
             }
         }
 
-        tree.AddBranch(Childtree, tree);
+        tree.addtoTempBranchList(threadNumber, Childtree);
+        //tree.AddBranch(Childtree, tree/*, threadNumber*/);
         //Action aFunction = () =>
         //{
 
@@ -204,8 +179,9 @@ public class Player
         Debug.Log("Three Build : Done! Elapsed time: " + sw.ElapsedMilliseconds / 1000f);
         EventManager.CallThreadEndEvent((float)threadNumber);
 
+
     }
-   
+
 
     /// <summary>
     /// Assigns minimax scores to the tree nodes
@@ -274,12 +250,12 @@ public class Player
         if (maximizing)
         {
             // Player2 Wins
-            node.MinimaxScore = 0 - Mathf.Pow(10, -node.determineDepth(node)+1);
+            node.MinimaxScore = 0.5f - Mathf.Pow(10, -node.determineDepth(node)+1);
         }
         else
         {
             // Player1 Wins
-            node.MinimaxScore = 0 + Mathf.Pow(10,-node.determineDepth(node)+1);
+            node.MinimaxScore = 0.5f + Mathf.Pow(10,-node.determineDepth(node)+1);
         }
     }
 
@@ -300,6 +276,41 @@ public class Player
         }
         else
         {
+
+            if (maximizing)
+            {
+                if (node.Value.CheckNeighbourCloseToWin(node.Value.lastMove, 4))
+                {
+                    node.MinimaxScore = 0.5f - Mathf.Pow(10, -node.determineDepth(node) + 1);
+
+                    //Debug.Log(node.Value.ToString());
+                }
+
+
+
+
+
+
+            }
+            else
+            {
+                if (node.Value.CheckNeighbourCloseToWin(node.Value.lastMove, 4))
+                {
+                    node.MinimaxScore = 0.5f + Mathf.Pow(10, -node.determineDepth(node) + 1);
+                    //Debug.Log(node.Value.ToString());
+                }
+
+
+            }
+
+
+
+            // Rule 1 if there are 2 add a third
+
+            // Rule 2 if there are three of mine, thats like winning
+
+            // Rule 3 if there are three of the oponents, thats like loosing
+
             // use a heuristic evaluation function to score the node
 
             // Rule 1: if there is only 1 Bin filled with 1 Bears: we dont wannt take this one
@@ -339,7 +350,7 @@ public class Player
             //    }
             //}
             //else
-            node.MinimaxScore = 0f;
+            node.MinimaxScore = 0.5f;
         }
     }
 

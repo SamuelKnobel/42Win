@@ -145,7 +145,7 @@ TextureImporter:
         width: 160.66667
         height: 159.66667
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -166,7 +166,7 @@ TextureImporter:
         width: 160.66667
         height: 159.66667
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -174,27 +174,6 @@ TextureImporter:
       bones: []
       spriteID: 7d5538853379f2e438b96ee252f95e68
       internalID: -3911128351369292997
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Circles_2
-      rect:
-        serializedVersion: 2
-        x: 320
-        y: 319.3333
-        width: 160.66667
-        height: 159.66667
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 52f91177451b2214dab39c3353c03328
-      internalID: 2190485357215893546
       vertices: []
       indices: 
       edges: []
@@ -208,7 +187,7 @@ TextureImporter:
         width: 160.66667
         height: 159.66667
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -229,7 +208,7 @@ TextureImporter:
         width: 160.66667
         height: 159.66667
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -250,7 +229,7 @@ TextureImporter:
         width: 160.66667
         height: 159.66667
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -271,7 +250,7 @@ TextureImporter:
         width: 160.66667
         height: 159.66667
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -292,7 +271,7 @@ TextureImporter:
         width: 160.66667
         height: 159.66667
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -313,7 +292,7 @@ TextureImporter:
         width: 160.66667
         height: 159.66667
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
